@@ -1,0 +1,751 @@
+ULTIMATE PROJECT EXPANSION MASTER PROMPT
+LEONIDA LEGACY — ULTRA-PHOTOREALISTIC, FULLY PLAYABLE BABYLON.JS OPEN-WORLD GAME
+
+IMPORTANT: This prompt consolidates the complete feature scope and every major upgrade requested in my previous project conversations. I have already submitted an earlier master prompt to Google AI Studio. Treat this document as the definitive expansion and feature-consolidation specification for that same project. Extend and integrate the existing project; do not restart it, discard working systems, replace the established architecture, or silently remove any previously requested feature. This is a feature-development brief, not a request to revisit old debugging conversations.
+
+Do not spend this task discussing or replaying historical Vite, WebSocket, syntax, import/export, duplicate-declaration, parsing-loop, or other old build-fix tickets. Do not reproduce old error logs or claim that historical fixes are the main task. Concentrate on implementing the complete game and all requested upgrades described below. Normal engineering validation of newly implemented features is still required.
+
+============================================================
+1. PROJECT GOAL AND ROLE
+============================================================
+
+Act as a senior browser-game director, Babylon.js and TypeScript engineer, real-time rendering engineer, world-building artist, technical artist, physics/simulation engineer, gameplay designer, AI engineer, UI/UX designer, audio programmer, and performance engineer.
+
+Build LEONIDA LEGACY: a cohesive, deeply detailed, fully playable, persistent, large-scale open-world 3D browser game inspired by the atmosphere and broad setting of a modern Florida-style crime/action sandbox. The world is the fictional State of Leonida, with Vice City as its major coastal metropolis. It must feel like a real, continuous place rather than a collection of disconnected demo scenes.
+
+The result must include a playable world, functioning gameplay systems, responsive menus and HUD, meaningful interactions, vehicles that can be driven, aircraft and watercraft that can be operated, living traffic and crowds, interiors, missions and activities, a believable economy, dynamic weather, day/night progression, procedural audio, save/load, and strong visual fidelity.
+
+The goal is not merely to render a pretty scene. Build a genuinely playable and interconnected open-world experience. Every major system must exchange data correctly with the others: the world affects vehicles, weather affects roads and water, NPCs react to the world, the map reflects actual roads and locations, missions use actual world entities, the smartphone controls real game functions, and saving restores meaningful game state.
+
+============================================================
+2. EXISTING PROJECT, TECHNOLOGY AND ARCHITECTURE
+============================================================
+
+Preserve the current Google AI Studio project structure and the already-submitted master-prompt requirements. Inspect the existing project before making architectural decisions. Integrate with the current app instead of creating a parallel game that is not connected to the main page.
+
+Use Babylon.js as the 3D engine. Do not replace it with Three.js. Use TypeScript and modern ES modules where compatible with the existing project. Keep the existing Vite/React/TypeScript setup if that is what the project currently uses. The Babylon.js scene must render inside the existing application entry point and remain connected to the real game systems.
+
+Use WebGPU as the preferred renderer when supported, with a robust WebGL2 fallback. Detect capabilities before selecting rendering features. Do not assume every browser or iPad supports every WebGPU feature. Create one coordinated engine, one active game scene, one primary render loop, and well-defined ownership of cameras, input, assets, audio, physics, and world state. Avoid duplicate engine instances, duplicate render loops, conflicting event listeners, and scattered global state.
+
+Use browser-native technologies where appropriate: HTML5, CSS3, TypeScript/JavaScript ES2022+, Pointer Events, requestAnimationFrame, Web Audio API, IndexedDB, and the browser Gamepad API. Use a suitable physics integration compatible with Babylon.js and the target browsers. Keep the code compatible with the actual installed library versions and documented APIs.
+
+MODULARITY RULE — STRICT FILE SIZE: The total project may grow as large as necessary. There is no arbitrary total line-count limit and no fixed limit on the number of source files or modules. However, keep every individual source-code file below 450 lines. Split larger systems into many focused, independently maintainable files. Do not compress the whole game into a few enormous files. Add as many useful modules and submodules as necessary, with clean imports, exports, interfaces, and ownership boundaries. The 450-line rule applies to source-code files, not to this prompt or documentation.
+
+Create a scalable architecture with clear systems for: core boot and lifecycle; rendering and graphics settings; world coordinates and streaming; map and terrain; biomes and vegetation; roads and traffic; architecture and interiors; characters and animation; player input and cameras; vehicles and vehicle customization; aircraft; marine vehicles; water and diving; weather and time; NPC and crowd AI; traffic AI; police and emergency simulation; mission and activity management; economy and properties; inventory and equipment; smartphone applications; HUD and menus; audio; haptics; save/load; localization; accessibility; and performance profiling. These are logical system areas, not a maximum module count. Create more folders, files, services, and submodules wherever useful.
+
+Maintain a clear project manifest and feature registry. Track what is implemented, what is partly implemented, what is not implemented, which files own each feature, and which systems depend on it. Keep documentation current. Do not mark a feature complete just because a class, menu, visual object, or button exists: the feature is complete only when its actual behavior works in the running game.
+
+============================================================
+3. WORLD GEOGRAPHY — LEONIDA STATE
+============================================================
+
+The world map is one of the highest priorities. Use the Leonida map reference images I previously supplied as the primary guide for the overall land silhouette, geographic relationships, coastlines, islands, waterways, city placement, roads, and regional colors. Also use the official Rockstar Leonida map artwork and official screenshots as additional reference material when available. If an old image is not visible in the current project workspace, do not pretend to have inspected it; continue with available references and clearly request the missing image only when it is actually needed.
+
+NEVER make the landmass a simple square, rectangle, flat grey plane, or generic grid. Build a large, irregular, organic landmass surrounded by open ocean, with natural peninsulas, bays, barrier islands, inlets, offshore islands, rivers, lakes, wetlands, beaches, marsh channels, coves, and varied shorelines. The geography must be recognizable from the map references. Keep the full 3D world, pause-menu map, GPS, and minimap consistent with one underlying geographic data model.
+
+The world must have real 3D elevation. Do not make every region a flat plane at zero metres. Use a terrain heightfield or equivalent terrain system with beaches near sea level, shallow underwater reefs, flooded wetlands, rolling central hills, rugged western terrain, river valleys, rocky cliffs, canyons, and forested northern mountains. Use realistic transitions between land, sand, mud, rock, vegetation, and water. Shorelines must not look like hard polygon cuts.
+
+OFFICIAL MAJOR REGION ANCHORS:
+Use these six major Leonida region names as the primary high-level geographic labels:
+- Vice City.
+- Leonida Keys.
+- Grassrivers.
+- Port Gellhorn.
+- Ambrosia.
+- Mount Kalaga National Park.
+
+EXPANDED EIGHT-ZONE WORLD PLAN FROM MY PREVIOUS MAP SPECIFICATION:
+Use the following eight detailed gameplay zones to organize geography, terrain, architecture, roads, landmarks, and streaming. Some are subregions or local areas within the six major official regions, not additional official macro-regions.
+
+ZONE 1 — VICE CITY, VICE BEACH AND OCEAN BEACH (EAST COAST / VICE-DALE AREA):
+Create the main coastal metropolis and its surrounding barrier islands. Include the broad downtown mainland, dense urban districts, golden sandy Atlantic beaches, beachfront strips, canals, waterfront roads, manicured green spaces, golf-course lawns, beach promenades, piers, marinas, parks, and multi-level highway connections. Include the city districts and local labels from the earlier map brief where they match the reference material: Downtown, Crosstown, Little Cuba, Little Haiti, Tisha-Wocka flea market, Stockyard, Ocean Beach, Washington Beach, Vice Beach, Leaf Links, Bayside, Rockridge, Salton, Southside, Tequesta and other clearly supported local neighborhoods. Use the names as geographic labels only when supported by the supplied references or verified material; do not invent false official status for uncertain labels.
+
+Terrain target: low coastal barrier island approximately 1–4 m above sea level, with downtown mainland areas rising approximately 3–12 m. Treat these figures as adjustable world-building targets rather than surveyed real-world elevations. Include wide pale-gold beaches, dunes, sea walls, landscaped waterfronts, dark asphalt avenues, wet reflective streets, cobblestone promenades, palm-lined boulevards, canals, and bridges.
+
+Architecture: pastel pink, mint, peach, cream, and pale-blue Art Deco hotels; modern glass financial towers; concrete residential blocks; luxury waterfront apartments; older low-rise commercial streets; rooftop lounges; music studios; hotels; offices; sports venues; apartment towers; restaurants; diners; convenience shops; garages; parking structures; nightlife districts; marinas; and public facilities. Include detailed façades, balconies, signs, air-conditioning units, rooftop equipment, fire escapes, awnings, shop windows, interiors, and believable wear.
+
+ZONE 2 — CENTRAL BAY ISLANDS:
+Build tropical residential and leisure islands connected to the mainland and Vice Beach through long causeways, bridges, and drawbridges. The previous map brief included the working labels Starfish Island, Vespucci Island, Rialto Islands, Casanova Island, and Wakman Island. Treat these as reference-dependent local labels and verify them against supplied images before presenting them as canonical names.
+
+Terrain target: low landscaped islands approximately 2–5 m above sea level. Add lush royal palms, tropical gardens, seawalls, private docks, yacht marinas, waterfront paths, gated residential roads, luxury mansions, glass-fronted villas, tennis courts, helipads, swimming pools with underwater lighting, boat houses, and service buildings. Add bridges with realistic structural supports, road joints, expansion gaps, lighting, navigation markers, and opening drawbridge behavior where appropriate.
+
+ZONE 3 — VICE CITY INTERNATIONAL AIRPORT (VCIA) AND PORT VICE CITY:
+Create a large airport and industrial port district with runways, taxiways, apron markings, hangars, terminals, service roads, parking structures, radar equipment, control tower, ground-service vehicles, fuel areas, cargo facilities, container terminals, shipping channels, cranes, docks, warehouses, shipyards, tugboats, cargo vessels, and passenger facilities.
+
+Terrain target: mostly flat reinforced concrete tarmac and port surfaces approximately 2–3 m above sea level, alongside dredged deep-water channels. Airports and ports must be fully integrated into the road, vehicle, aircraft, marine, GPS, and mission systems. Aircraft must be able to land and take off from valid runways. Cargo vessels and smaller boats must use navigable water channels.
+
+ZONE 4 — GRASSRIVERS, BUCKSKIN SWAMP, HAMLET AND MARIANA-STYLE WETLAND AREAS:
+Build extensive low-lying wetlands with winding water channels, shallow flooded areas, muddy islands, mangroves, reeds, marsh grasses, cypress trees, palms, fallen branches, wet soil, floating vegetation, natural pools, and dirt or gravel trails. Add wooden stilt houses, rural homes, farms, boat ramps, airboat docks, fishing spots, small bridges, elevated highways, utility poles, rural stores, and wildlife habitats. Include believable wetland wildlife and ambient life without turning animals into props. The previous map brief used Buckskin Swamp, Hamlet, Pelican Valley and Mariana County as local working labels; keep their status clear if they are not confirmed by the current official reference.
+
+Terrain target: approximately 0–2 m elevation with flooded depressions, shallow channels, mud banks, and occasional slightly raised islands. Wetlands must be navigable by suitable boats and traversable on foot only where the ground supports it.
+
+ZONE 5 — AMBROSIA AND LAKE LEONIDA:
+Build the rural and industrial heartland around a large freshwater lake. Include rolling agricultural countryside, fields, drainage channels, farm roads, dirt trails, railway corridors, industrial yards, small-town streets, roadside diners, fuel stations, barns, silos, workshops, service businesses, race facilities, fairgrounds, rodeo grounds, and rural homes.
+
+Terrain target: gentle rolling land approximately 8–35 m above sea level, with low slopes around the lake and agricultural plains. Include the Allied Crystal Sugar Refinery as a prominent industrial landmark: large processing buildings, chimneys, silos, tanks, pipework, service roads, rail sidings, loading areas, and atmospheric emissions. Add Ambrosia Raceway Park and related event facilities as named points of interest when confirmed by the reference material.
+
+Lake Leonida must be a major geographic feature with realistic shorelines, beaches, marshy sections, coves, boat ramps, docks, vegetation bands, underwater depth transitions, reflections, waves, and boat navigation routes.
+
+ZONE 6 — PORT GELLHORN, CAPRI AND THE WESTERN GULF COAST:
+Build a contrasting, weathered coastal region with irregular bays, muddy flats, sandy inlets, small islands, old piers, industrial waterfronts, disused attractions, modest motels, roadside businesses, trailer parks, marinas, repair yards, and fading seaside architecture. Include rolling green hills inland, rocky cliffs, canyons, caves, dirt tracks, off-road areas, and scenic overlooks.
+
+Terrain targets: coastal flats near sea level, then rolling inland hills roughly 15–65 m above sea level. Previous local map labels include Draper Bay, Borrachero Sound, Capri Sound, Sandbars, Crude Islands, Manifest Canyon, Emerald Springs, Wild Hog Airfield, Gellhorn Raceway and Thrillbilly Mud Club. Use these as reference-dependent labels only when supported by the material available in the project.
+
+Create a strong visual contrast between the glamorous east-coast metropolis and this more weathered western coastal region. The area should still be colorful and rich in detail, not uniformly grey or lifeless.
+
+ZONE 7 — MOUNT KALAGA NATIONAL PARK AND THE NORTHERN HIGHLANDS:
+Build the highest and most rugged terrain in Leonida. Include forested mountains, steep hills, rocky ridges, exposed stone, cliffs, caves, ravines, mountain streams, waterfalls, winding rivers, pine and cypress forests, clearings, lookout points, hiking paths, off-road tracks, campgrounds, ranger towers, cabins, lodges, fishing locations, and scenic highways. Create distant views toward the southern landscape and the Vice City skyline where line of sight permits.
+
+Terrain target: approximately 80–220 m or higher in the most elevated areas, with varied slopes, ridgelines, drainage, cliffs, and foothills. Treat height ranges as adjustable art targets, not official surveyed measurements. Add rural settlements and the northern suburban area of Belville if supported by the supplied map. The previous prompt used Lummox County and Leonard County as working labels. Keep their provenance clear when uncertain.
+
+ZONE 8 — LEONIDA KEYS, KEY LENTO AND MILE ZERO AIR STATION:
+Build a long southern island chain of coral-rock islands, mangroves, white and golden sand beaches, shallow turquoise reefs, deep ocean channels, tiny coves, sea grass beds, rocky shorelines, beach settlements, boat marinas, waterfront houses on stilts, and tropical vegetation. Include long multi-mile overseas bridges and causeways connecting islands, with realistic support structures, road barriers, lights, navigation signs, and water views. Include Key Lento and Mile Zero Air Station as local points of interest if supported by the supplied map/reference material.
+
+Terrain target: low islands approximately 0.5–4 m above sea level, with shallow reefs transitioning gradually into deeper ocean. Add visible marine life, underwater rock and coral formations, boat traffic, lighthouses, docks, and island landing strips where appropriate.
+
+MAP CONSISTENCY:
+The 3D terrain, satellite-style pause map, minimap, GPS route system, mission markers, street labels, and world streaming must use the same canonical coordinates and geographic database. The map should be full-color and highly legible: turquoise-to-deep-blue water, pale beaches, lush parks, differentiated wetlands, mountain shading, readable roads, bridges, highways, urban blocks, labels, and icons. It must support zooming, panning, route planning, destination selection, filters, and player-position tracking. Never show a generic square grey map.
+
+============================================================
+4. ADDITIONAL PLACE NAMES, DISTRICTS AND LANDMARKS
+============================================================
+
+Use verified official and user-provided place names wherever available. Rockstar's six major region anchors remain the canonical region hierarchy. The extra names below are useful location and architecture references collected from my earlier map specification and current community location guides. They are not all official major-region names. Verify exact spelling, existence, placement, and status against the supplied map, official artwork, screenshots, or in-game reference material before treating them as confirmed.
+
+Useful district and neighborhood labels to investigate: Downtown, Ocean Beach, Washington Beach, Vice Beach, Little Cuba, Little Haiti, Stockyard, Crosstown, Bayside, Rockridge, Salton, Southside, Tequesta, Tisha-Wocka, and Leaf Links.
+
+Useful landmarks and buildings to investigate: Megamundo Tower / Megamundo Building; Sahara Arena; Galina Ballet Opera House; Palaestra Tower; Fleeca Field; Allied Crystal Sugar Refinery; Ambrosia Raceway Park; Gellhorn International Raceway; Leonida Penitentiary; Ocean View Hotel; Hotel Dixon; Victory Arms; Effluvia; Hank's Waffles; Zeke's Gadgets; A1 Fashions; Mami's Market; Vice City International Airport; Port Vice City; Brian's Boat Works & Marina; Mile Zero Air Station; and other clearly visible venues from official reference images.
+
+Useful infrastructure and landscape labels from the previous map prompt include Lake Leonida, Leaf Links, Starfish Island, Vespucci Island, Rialto Islands, Key Lento, Pelican Valley, Draper Bay, Borrachero Sound, Capri Sound, Manifest Canyon, Emerald Springs, Waning Sands, and Vinewood Beach. These may be subregions, landmarks, or working map labels rather than official region names. Do not fabricate precise geography when the source material does not show it. Where a name is uncertain, preserve it in a clearly marked optional/local-label data list instead of forcing it onto the map.
+
+Street names and highway numbers from the earlier map prompt included Routes 97, 397, 404, 35, 62, 183, 297, 628 and Route 1A. Use them only when corroborated by map references or official material. Otherwise generate original, internally consistent Leonida street names and highway labels, and keep the data easy to revise.
+
+Buildings should be more than named silhouettes. Each important landmark needs appropriate exterior geometry, façade detail, signage, entrances, interior spaces where practical, lighting, collision/navigation behavior, and map/GPS metadata. Prioritize recognizable silhouettes for major landmarks and dense believable detail for ordinary city blocks.
+
+============================================================
+5. PHOTOREALISTIC GRAPHICS AND VISUAL DIRECTION
+============================================================
+
+The visual direction must be vibrant, sunlit, colorful, high-end and alive. Do not make the world dull, grey, dark, empty, washed out, or lifeless. Match the broad visual qualities of my reference images: highly detailed tuned cars; glossy metallic paint; bright tropical light; turquoise water; warm pastel coastal architecture; palms; reflective surfaces; and a richly detailed beach-city environment.
+
+Use high-quality physically based rendering throughout the world. Materials should have appropriate albedo, normal, roughness, metallic, ambient-occlusion and, where useful, height, emissive, clear-coat, transmission, and detail maps. Use realistic material response for paint, glass, chrome, rubber, leather, fabric, concrete, asphalt, sand, soil, rock, leaves, water, tile, wood, metal, and painted surfaces. Avoid identical material values across unrelated objects.
+
+Lighting must include bright tropical daytime sunlight, believable sky illumination, dynamic sun direction, high-quality shadows, golden-hour lighting, sunset, blue hour, night lighting, neon illumination, interior lighting, headlights, streetlights, traffic lights, signage, and reflected light. Include a day/night cycle with smooth transitions and a coherent time-of-day system. The world should remain colorful and readable at night, with neon pink/cyan accents, warm windows, street lighting, and vivid signs.
+
+Use cinematic post-processing carefully: high dynamic range where supported, tone mapping, bloom, exposure adaptation, ambient occlusion, screen-space reflections where appropriate, depth of field for optional cinematic moments, subtle motion blur only when beneficial, anti-aliasing, color grading, and atmospheric perspective. Avoid excessive bloom, heavy vignette, crushed blacks, or effects that make gameplay unclear.
+
+Use real-time or high-quality approximate reflections for glossy cars, wet asphalt, glass façades, pools, and ocean water. Use reflection probes, planar reflections, screen-space techniques, or other appropriate Babylon.js-supported methods based on performance. Reflections must have a sensible quality/performance budget and should degrade gracefully on weaker devices.
+
+Create convincing atmosphere: physically plausible sky gradients, clouds, haze, humidity, distant atmospheric scattering, fog, mist over wetlands, sea spray, rain curtains, storm fronts, and changing visibility. Keep distant skylines and mountains visually integrated rather than abruptly disappearing.
+
+All important buildings, vehicles, trees, characters, roads, props, and environmental assets must be detailed, multi-part, carefully proportioned, and visually finished. Do not use primitive cubes, untextured blocks, low-poly placeholder characters, empty building shells, or props that merely resemble a finished asset from far away. Procedural geometry is acceptable when it produces real detail and is organized into reusable high-quality asset generators. When unique hero assets require external models, use lawful assets and integrate proper materials, LODs, collisions, and animations.
+
+============================================================
+6. VEHICLES, CUSTOMIZATION AND PHYSICS
+============================================================
+
+Create a broad and varied vehicle ecosystem: tuned sports cars, supercars, classic cars, lowriders, muscle cars, sedans, SUVs, pickups, vans, motorcycles, service vehicles, emergency vehicles, taxis, buses, utility vehicles, off-road vehicles, boats, personal watercraft, helicopters, propeller aircraft, and private jets. Each category must have distinct dimensions, handling, mass, suspension behavior, sound profile, and visual identity.
+
+CAR MODEL DETAIL:
+Use sculpted bodywork with accurate proportions, panel gaps, bumpers, grilles, vents, door handles, mirrors, glass, trim, badges, headlights, taillights, indicators, brake lights, exhaust outlets, wheels, tires, brakes, suspension components, windows, seats, dashboards, steering wheel, mirrors, displays, interior materials, and functional doors where practical. Wheels must rotate and steer correctly. Headlights, taillights, brake lights, reverse lights, and turn signals must respond to vehicle state.
+
+PAINT AND TUNING:
+Create high-quality metallic and pearlescent paint, multi-layer clear coat, glossy reflections, realistic surface roughness, subtle micro-scratches, dust, dirt, rain beads, and clear-coat water droplets. Support configurable paint colors and gradients. Add customizable RGB neon underglow with hue, intensity, animation mode, and brightness controls. Provide tuning for wheels, tires, suspension height, body kits, spoilers, bumpers, exhaust style, window tint, paint, interior trim, and performance categories where supported.
+
+VEHICLE PHYSICS:
+Implement connected vehicle dynamics: acceleration, torque, gearing, engine RPM, braking, reverse, steering, traction, tire grip, suspension travel, damping, weight transfer, center of mass, drivetrain differences, differential behavior, surface-dependent friction, aerodynamic drag, downforce where appropriate, collision response, vehicle damage state, fuel/energy, and repair. Handling should vary between road, sand, dirt, mud, gravel, grass, wet asphalt, and water. Include realistic but playable drifting, wheel slip, braking distances, bumps, curbs, and suspension response.
+
+Vehicle interactions must include entering/exiting, seat selection where practical, cockpit camera, dashboard instrumentation, steering wheel motion, gear shifting animation, doors, lights, horn, handbrake, vehicle camera modes, radio, damage display, repair and service locations, vehicle storage, and persistence. Include traffic-compatible AI driving and parked vehicle behavior. Avoid vehicles that are decorative only: every vehicle advertised as drivable must actually be controllable.
+
+============================================================
+7. BEACH, OCEAN, LAKES, WATERCRAFT AND DIVING
+============================================================
+
+Build a detailed tropical coastline with turquoise shallow water, deeper blue ocean, sandy beaches, wet sand, dunes, rocky points, reefs, foam, wave patterns, shoreline wash, reflections, underwater depth transitions, and visible marine life. Add colorful umbrellas, sun loungers, towels, beach kiosks, lifeguard towers, boardwalks, piers, beach paths, beach sports areas, coastal vegetation, and palm trees.
+
+Water must be animated and responsive. Include directional and layered waves, normal-map motion, foam near shore, changing roughness, shallow-water color gradients, reflections, refraction, depth tinting, caustic-like underwater light patterns, shoreline interaction, rain ripples, wake trails, boat wake, and wind influence. Use performance-aware water techniques instead of a single flat blue plane.
+
+Create water physics for swimming, floating, diving, underwater movement, buoyancy, water entry and exit, currents where appropriate, underwater visibility, bubbles, underwater ambience, wet character states, and surface-specific movement. Include readable water depth and safe interaction boundaries.
+
+Boats and marine vehicles must have appropriate hulls, engine behavior, steering, buoyancy, wake effects, docking, mooring, and water navigation. Include small boats, speedboats, yachts, airboats in the wetlands, and other suitable watercraft. Add marinas, boat yards, ramps, docks, piers, and navigable channels.
+
+============================================================
+8. AIRCRAFT AND AVIATION
+============================================================
+
+Add fully operable aircraft categories including propeller aircraft, private jets, and helicopters. Use detailed external models, cockpits, functional control surfaces, spinning propellers or turbine effects, landing gear animation, navigation lights, engine states, doors, instruments, and appropriate audio.
+
+Flight behavior must include throttle, lift, drag, pitch, roll, yaw, climb, descent, banking, stall-like handling limits at a playable level, landing and takeoff behavior, runway alignment, ground handling, landing gear state, and camera transitions. Helicopters require distinct rotor-driven lift and responsive yaw/translation. Aircraft should feel different from road vehicles and boats.
+
+Include airports, taxiways, runways, hangars, helipads, parking stands, ground vehicles, air traffic ambience, distant aircraft, and route/map integration. Aircraft must use coherent world collision and altitude handling. Avoid presenting a static aircraft prop as a flyable aircraft.
+
+============================================================
+9. CHARACTERS, PLAYER CONTROL AND ANIMATION
+============================================================
+
+Provide high-detail, anatomically believable character models for the requested protagonists Lucia and Jason and for a varied population of NPCs. Use detailed faces, hair, skin shading, realistic proportions, layered clothing, fabric folds, shoes, accessories, and appropriate facial and body animation. Keep character assets respectful and non-sexualized.
+
+Support switching between the two protagonists, with distinct attributes, outfits, animations, and saved state. Maintain persistent position, clothing, current activity, and relevant progression for each character. Provide smooth movement, acceleration/deceleration, turning, stopping, walking, jogging, sprinting, jumping, climbing, swimming, entering/exiting vehicles, sitting, interacting, and context-aware movement transitions.
+
+Provide seamless third-person and first-person camera modes, selectable from the HUD or controller. The first-person mode should include a coherent body/hand presentation where practical, correct camera collision, head movement kept subtle, and proper transitions to vehicle and aircraft cockpit cameras. Third-person movement must support camera orbit, follow distance, collision avoidance, smoothing, and camera recentering.
+
+Use skeletal or well-designed procedural animation for locomotion, idle variation, turning, climbing, interactions, vehicle entry/exit, driving posture, steering, shifting, flying controls, swimming, diving, and contextual gestures. Animations must blend without visible snapping or foot sliding. NPCs need varied clothing, body types, faces, walk styles, idle loops, and believable group behavior.
+
+============================================================
+10. LIVING WORLD, TRAFFIC, NPC AI AND WILDLIFE
+============================================================
+
+Make Leonida feel active and inhabited throughout the day. Create pedestrian populations in downtown streets, residential areas, shopping districts, parks, promenades, beaches, marinas, rural towns, industrial areas, and nightlife districts. NPCs should have schedules, destinations, routines, social interactions, idle activities, reactions to weather, reactions to nearby events, and sensible pathfinding.
+
+Pedestrians should walk along sidewalks and paths, use crossings, avoid obstacles, respond to traffic, gather in small groups, sit on benches, visit shops, spend time on the beach, use public spaces, and transition naturally between activities. Do not leave the streets empty or populate them with motionless mannequins.
+
+TRAFFIC SYSTEM:
+Implement dense but performance-aware traffic with different vehicle classes, road lanes, speed ranges, following distance, lane changing, turning, parking, traffic density by time and district, emergency vehicle priority, collision avoidance, and route-aware behavior. Create synchronized 3D traffic lights with red/yellow/green phases, stop lines, intersection logic, pedestrian crossings, turn signals, yielding, and lane rules. AI vehicles must obey traffic-light state and avoid collisions. Include realistic stopping, acceleration, queueing, merging, and controlled intersection behavior.
+
+NPC and vehicle AI must use the same navigation and world data as the map and physics systems. Use spatial partitioning, path graphs, navigation meshes or other appropriate data structures. Include efficient update scheduling and LOD for distant entities.
+
+WILDLIFE AND NATURE:
+Populate wetlands, beaches, forests, mountains, lakes, and ocean with appropriate wildlife and environmental life. Add believable bird behavior, marine life, insects, and region-appropriate animals. Include alligators as environmental wildlife in wetland habitats, with non-graphic behavior and sensible distance/interaction logic. Do not make every animal repeat the same animation or path.
+
+============================================================
+11. POLICE, EMERGENCY SERVICES AND CINEMATIC WORLD EVENTS
+============================================================
+
+Create a fictional, game-only wanted-level and law-enforcement simulation with escalating response states, visible patrol presence, dispatch notifications, emergency vehicles, pursuit presentation, search states, and clear player feedback. Keep the system cinematic and abstract; do not model real-world evasion tactics or operational law-enforcement procedures. The point is believable game feedback and world reactivity, not real-world instruction.
+
+Include fire and medical response vehicles, tow trucks, roadside assistance, airport ground services, harbor services, and emergency dispatch presentation. NPCs and traffic should react appropriately to large fictional events without exposing the player to graphic detail.
+
+Create high-quality cinematic impact effects for fictional game events: layered flashes, dynamic colored illumination, smoke plumes, sparks, dust, shattered non-detailed debris, scorch decals, impact marks, and restrained camera shake. Keep effects stylized enough to remain fictional and non-instructional. Do not provide real-world explosive recipes, construction details, or weapon-use guidance.
+
+============================================================
+12. MISSIONS, ACTIVITIES AND WORLD INTERACTIONS
+============================================================
+
+Build an interconnected mission and activity framework with main missions, optional side missions, character-specific tasks, location-based events, timed activities, races, driving challenges, scenic exploration, delivery-style tasks, vehicle service tasks, taxi-style passenger transport, photography and discovery activities, beach recreation, golf-course activities, boating, fishing-style leisure interactions, aviation challenges, off-road routes, and social events.
+
+Missions must use the actual world rather than isolated menus. Each mission should have a clear start condition, objectives, progress state, navigation markers, dialogue or instruction text, completion state, rewards, save integration, and graceful handling if the player leaves the area or interrupts the activity. Use original dialogue and mission writing. Avoid copying copyrighted dialogue, story text, or mission sequences from existing games.
+
+Add dynamic world events such as local festivals, roadworks, beach events, sporting events, weather disruptions, traffic incidents, visiting aircraft, boat activity, and NPC gatherings. These events must be scheduled or triggered using world time and location data.
+
+Add a complete inventory and utility-equipment system with a clear selectable action/gear wheel. Include useful, non-weapon game items such as the smartphone, camera, map, flashlight, vehicle-service tools, keys/access items, collectibles, and mission-specific objects. Items must have real state, UI feedback, ownership rules, and save integration. Include wardrobe/outfit selection and character appearance customization. Provide a readable mission-failure, retry, checkpoint, and respawn flow with non-graphic presentation. Add a photo mode and optional cinematic replay/camera director for memorable driving, flying, boating, and scenic moments.
+
+Add usable public transportation where supported by the map: buses, metro or rail, taxis, ferries, stops, stations, routes, boarding and exiting, route information, and NPC passengers. These systems must connect to the actual road, rail, water, map, and navigation networks rather than acting as decorative props.
+
+Provide meaningful interactions with doors, elevators, shops, counters, garages, fuel stations, apartment entrances, service desks, benches, docks, vehicles, map points, and environmental objects. Use a consistent interaction system with clear prompts and input mapping.
+
+============================================================
+13. ECONOMY, PROPERTIES AND PROGRESSION
+============================================================
+
+Create a coherent fictional economy with currency, purchases, repairs, vehicle upgrades, clothing, properties, garages, services, mission rewards, and save persistence. Include a fictional in-game finance app and simplified fictional stock-market simulation if practical. Keep it clearly separated from real-world investing and use fictional company names and simulated values only.
+
+Include property ownership, garages, safe locations, character homes, vehicle storage, property upgrades, and business/location progression. Purchases must update the world state and the user interface. Do not show buttons that do nothing. Include transaction confirmations, insufficient-funds feedback, inventory updates, and save/load integration.
+
+============================================================
+14. IFRUIT-STYLE SMARTPHONE AND APPLICATION ECOSYSTEM
+============================================================
+
+Create a detailed in-game smartphone interface with a polished app grid, notifications, status indicators, app transitions, readable typography, touch support, controller navigation, and a home/lock screen. The device should be fully integrated into gameplay and not merely decorative.
+
+Include working in-game apps and systems for:
+- Taxi or ride service: request transport, select destination, see route and estimated pickup state.
+- Mechanic and vehicle service: request a repair/service interaction and view vehicle condition.
+- Finance: view balance, transaction history, fictional investment/market information, and owned assets.
+- Properties: inspect, purchase where supported, manage, and navigate to owned locations.
+- Vehicle tuning: access customization options and apply visual settings such as paint, wheel choices, and RGB underglow.
+- Fictional puzzle/minigame app: safe, abstract logic challenges that do not teach real-world hacking or bypass techniques.
+- Emergency/911-style dispatch interface: present fictional emergency requests and game-world service events.
+- Social feed: show fictional NPC posts, event photos, world news, and location updates using original content.
+- Radio: choose original in-game stations and control volume/station selection.
+- Map/GPS: set destinations, inspect landmarks, choose route preferences, and track objectives.
+
+All app buttons must work, app state must persist where appropriate, and each app must connect to the relevant game system. Use original app names, fictional brands, and original UI artwork rather than copying protected interface assets.
+
+============================================================
+15. MAP, HUD, GPS AND MENUS
+============================================================
+
+Create a polished HUD with a high-quality full-color minimap, player marker, orientation, street and district labels, route line, destination marker, nearby points of interest, mission guidance, speedometer when driving, vehicle state, time, current character, and contextual interaction prompts. The HUD must adapt to walking, driving, flying, boating, swimming, and map/pause states.
+
+The full pause map must support panning, zooming, layer toggles, location search, district labels, points of interest, route selection, mission markers, and player location. Use a satellite/street-map-inspired visual style that reflects the actual world geometry and color palette. Do not use a blank grey square map or random disconnected markers.
+
+Include a pause menu, settings, graphics presets, audio controls, controller settings, touch-control settings, accessibility options, localization, save/load interface, help/manual, and a controller button guide. Add an in-game developer/debug view for development only, with performance counters, world region information, entity counts, asset loading status, and relevant system state. Keep developer tools hidden from normal gameplay unless deliberately opened.
+
+============================================================
+16. AUDIO — NATIVE WEB AUDIO API ONLY
+============================================================
+
+Build a complete, event-driven procedural soundscape using the native browser Web Audio API only. Do not import or use Babylon.js Sound classes. The audio system must be centrally managed, spatially aware where practical, volume-controlled, and connected to actual game events.
+
+Create dynamic sound layers for car engine idle, acceleration, RPM changes, gear shifts, exhaust, tire rolling, tire squeal, drifting, braking, road surface changes, vehicle collisions, suspension bumps, door movement, horns, aircraft engines and turbines, rotor wash, propellers, watercraft engines, boat wakes, footsteps on asphalt/sand/grass/gravel/wood, indoor footsteps, clothing movement, wind, palm leaves, ocean waves, beach ambience, rain, thunder, distant traffic, city crowds, NPC chatter, birds, insects, wetlands, forest ambience, airport ambience, harbor ambience, and interior room tone.
+
+Create a switchable in-game Vice City-inspired 80s/synthwave radio with multiple original stations, station identifiers, DJ-style transitions using original writing, volume control, track transitions, and radio behavior that changes when entering/exiting vehicles. Generate original music and sound patterns or use assets that are properly licensed for this project. Do not copy copyrighted songs, recordings, melodies, lyrics, or soundtrack tracks from existing games or commercial artists.
+
+Audio must respect browser autoplay restrictions. Initialize or resume audio after the first genuine user interaction. Provide mute, master volume, music volume, effects volume, ambience volume, and radio volume. Prevent duplicated audio contexts, runaway oscillators, event-listener leaks, and sounds continuing after entities are removed.
+
+============================================================
+17. INPUT, IPAD TOUCH CONTROLS AND PS5 DUALSENSE
+============================================================
+
+Support desktop keyboard/mouse, iPad touch input, and PS5 DualSense controllers. Provide a settings/HUD toggle to select Touch Controls or Controller Mode, plus automatic detection and connection/disconnection feedback. Use the browser Gamepad API and support the actual mapping reported by the controller/browser. Do not assume every browser exposes identical button indices or haptic features.
+
+IPAD TOUCH MODE:
+Create polished, responsive, multi-touch controls with a left virtual movement joystick, right-side camera-look region, context-sensitive action buttons, jump, sprint, interaction, enter/exit vehicle, vehicle accelerator/brake controls, steering, handbrake, camera toggle, map, smartphone, radio, pause, and context actions for aircraft and boats. Buttons must be spaced for comfortable landscape iPad play, avoid accidental touches, support simultaneous movement and camera input, and adapt to screen sizes and safe areas. Include opacity, size, position, sensitivity, and left/right-handed layout settings.
+
+PS5 DUALSENSE MODE:
+Provide a complete on-screen controller layout and button guide. Support sticks, triggers, face buttons, shoulder buttons, D-pad, touchpad, Create, and Options where available. Map controls contextually for on-foot movement, driving, boats, aircraft, menus, map navigation, smartphone, camera switching, and interaction.
+
+Suggested on-foot mapping: Left Stick = movement; Right Stick = camera; L3 = sprint; Cross/X = jump or climb; Triangle = enter/exit vehicle or interact; D-Pad Up = smartphone; D-Pad Down = minimap zoom; D-Pad Left = radio; D-Pad Right = switch character or contextual setting; Touchpad/Create = cycle camera; Options = pause. Use remaining buttons for safe contextual interactions and menu navigation.
+
+Suggested land/water vehicle mapping: R2 = accelerate; L2 = brake/reverse; Left Stick = steer; Right Stick = look; Cross/X or R1 = handbrake; L3 = horn or optional boost; Triangle = exit vehicle; Circle = camera/headlight context; D-Pad Left = radio wheel; D-Pad Right = lights/turn signals; Options = pause. Context-sensitive controls must be shown in the guide.
+
+Suggested aircraft mapping: R2 = throttle increase; L2 = throttle decrease; Left Stick = pitch and roll; L1/R1 or Square/Circle = yaw; L3 = landing-gear toggle; Triangle = exit aircraft where safe; Touchpad/Create = camera including cockpit view. Display a context-specific flight guide.
+
+Use clear prompts that reflect the currently active control mode. Allow remapping and sensitivity adjustment where possible. If a browser or device does not expose a particular button, touchpad event, trigger value, or feature, detect that limitation and provide a sensible fallback instead of claiming unsupported functionality.
+
+FULLSCREEN:
+Offer clean fullscreen on the first user tap/click when the browser permits it. Respect the Fullscreen API's user-gesture requirement and platform restrictions. If automatic fullscreen is unavailable, provide a clear fullscreen button and preserve a polished immersive layout. Do not repeatedly fight the browser or falsely claim fullscreen is active when it is not.
+
+HAPTIC FEEDBACK:
+Use Gamepad vibrationActuator or supported dual-rumble features when the connected controller and browser expose them. Use device vibration only where available. Detect capabilities and degrade gracefully on iPad/Safari or any browser where vibration is unavailable. Provide subtle, configurable haptics for engine idle and revving, road texture, asphalt/sand/gravel transitions, bumps, curbs, drifting, braking, vehicle impacts, aircraft turbulence, landing, watercraft wakes, swimming, footsteps, and UI interactions. Add a vibration intensity setting and an option to disable haptics. Never claim universal haptic support if the device/browser does not provide it.
+
+============================================================
+18. WEATHER, TIME, ENVIRONMENT AND WORLD SIMULATION
+============================================================
+
+Build a full dynamic day/night cycle and a weather system with sunny tropical conditions, cloud cover, haze, humidity, fog, mist, rain, heavy rain, thunderstorms, lightning, wind, storm fronts, and major weather events. Include hurricane-style environmental conditions as a fictional world simulation with changing wind, rain, sea state, visibility, and world ambience. Weather must influence water, vegetation, vehicle handling, roads, pedestrian behavior, lighting, audio, and visibility.
+
+Animate palm trees, grasses, leaves, reeds, flags, hanging signs, and other suitable objects with wind. Let rain create wetness on asphalt, windows, car paint, sidewalks, sand, and rooftops. Add wet reflections and puddles that respond to rainfall and gradually dry. Make the ocean, lakes, canals, and wetlands respond to wind and weather.
+
+Create a functioning world clock. NPC routines, lighting, traffic density, business states, activities, and ambient audio should vary by time and weather. Avoid sudden world resets during transitions.
+
+============================================================
+19. ROADS, MATERIALS, STREET FURNITURE AND INFRASTRUCTURE
+============================================================
+
+Replace simple straight grids with an organic, varied road network that follows the natural coastlines and terrain. Include multi-lane highways, elevated highways, overpasses, bridges, causeways, tunnels where appropriate, winding coastal roads, city avenues, residential streets, downtown grids, alleys, industrial roads, rural roads, dirt roads, mountain roads, beach promenades, parking lots, roundabouts, ramps, intersections, and service roads.
+
+Roads need high-resolution PBR surface detail: visible asphalt grain, aggregate speckles, tiny cracks, repaired patches, tire marks, painted lane lines, road arrows, crosswalks, manhole covers, drainage grates, curb edges, expansion joints, wet reflective areas, puddles, dust, sand, mud, and wear. Use different road construction and materials for highways, concrete airport tarmac, city asphalt, cobblestone promenades, sandy paths, gravel, and rural dirt roads.
+
+Add detailed 3D street signs, street-name plates, traffic-light assemblies, poles, streetlights, utility poles, overhead wires, road barriers, guardrails, bollards, hydrants, benches, bus stops, parking meters, directional signs, road markings, construction equipment, and roadside props. Give every intersection appropriate signage and traffic infrastructure. Use a coherent road/street naming database so the map, GPS, and street signs agree.
+
+============================================================
+20. BUILDINGS, INTERIORS AND INTERACTABLE LOCATIONS
+============================================================
+
+Create a large variety of distinct buildings rather than repeating one façade. Use Art Deco hotels, glass skyscrapers, pastel apartments, concrete towers, suburban houses, waterfront mansions, rural cabins, swamp shacks on stilts, industrial refineries, warehouses, aircraft hangars, port facilities, hotels, diners, shops, garages, service stations, sports facilities, marinas, office towers, parking structures, and public buildings.
+
+Major structures should have accurate proportions, detailed roofs, parapets, windows, balconies, railings, signs, awnings, air-conditioning units, rooftop machinery, antennas, lighting, entrances, stairwells, elevators where practical, and realistic wear. Create interiors for a meaningful selection of key locations: player homes, garages, shops, diners, service stations, hotel lobbies, offices, airport interiors, selected public buildings, and mission/activity locations.
+
+Interiors must connect properly to the exterior world. Use sensible loading/streaming transitions, correct doors, collision handling, lighting, sound occlusion, navigation, and return points. Do not create fake doors that lead nowhere when presented as enterable locations.
+
+============================================================
+21. SAVE/LOAD, ASSET MANAGEMENT, LOCALIZATION AND USER SETTINGS
+============================================================
+
+Use IndexedDB or the existing project's appropriate persistence layer for save data. Persist player location, active character, progression, completed activities, money, properties, vehicles and customizations, settings, map discoveries, mission state, and relevant world state. Add safe versioning and migration handling so future updates do not destroy existing saves.
+
+Create an asset registry and loading pipeline for models, textures, sounds, animations, fonts, environment maps, and UI art. Support loading progress, error reporting, caching, disposal, and asset reuse. Use original or properly licensed assets only. Do not download or embed unauthorized copyrighted game assets.
+
+Support localization and text scaling. Use a string table rather than hard-coding visible text throughout the code. Include accessibility options such as subtitles, high-contrast HUD, control remapping, sensitivity settings, adjustable UI scale, audio settings, and reduced camera effects.
+
+============================================================
+22. PERFORMANCE AND IPAD OPTIMIZATION
+============================================================
+
+The game must remain responsive on iPad and desktop browsers. High detail must not mean uncontrolled rendering cost. Use GPU instancing, thin instances, merged static geometry where appropriate, texture atlases, mipmaps, LOD, distance culling, occlusion strategies, spatial partitioning, object pooling, asynchronous asset loading, region streaming, reduced update frequency for distant entities, efficient physics broadphase, and careful memory management.
+
+Create graphics presets such as Performance, Balanced, High, and Ultra. Include adaptive resolution and quality scaling where appropriate. Allow users to adjust shadow resolution, reflection quality, water quality, vegetation density, traffic density, NPC density, draw distance, post-processing, and texture quality. Automatically select a safe initial profile based on real device capabilities, but let the user change it.
+
+Do not sacrifice all visual quality on iPad. Maintain a vibrant, clear, recognizable world with properly prioritized detail. Use lower-cost approximations for distant objects while retaining high-quality hero assets near the player. Prevent runaway memory growth, excessive draw calls, unbounded particle counts, audio leaks, and physics overload.
+
+============================================================
+23. VISUAL REFERENCE INTEGRATION
+============================================================
+
+I have previously supplied multiple visual references across the project conversation:
+1. A highly detailed tuned sports car reference with sculpted bodywork, glossy metallic/gradient paint, detailed wheels, bright directional highlights, and reflective ground.
+2. A bright tropical beach/city reference with turquoise ocean, sandy beach, colorful umbrellas, palms, pastel coastal buildings, and a vivid sunny atmosphere.
+3. A full-state Leonida map reference showing the overall organic landmass, coastline, islands, rivers, lakes, swamps, mountains, regions, and highways.
+4. A closer central/southern Leonida map reference showing Vice City, barrier islands, downtown, wetland channels, highway interchanges, and surrounding natural geography.
+
+Use any of these images that are actually attached and visible in the current Google AI Studio project as direct visual references. Analyze them separately and extract their composition, geographic shape, materials, lighting, colors, architecture, vehicle proportions, and detail level. Do not claim to have inspected an image that is not accessible. If the images are not present in the current project, continue building the systems with the descriptions above and leave the asset-reference integration ready for when I upload them. Do not block unrelated development while waiting for images.
+
+============================================================
+24. IMPLEMENTATION EXPECTATIONS AND FEATURE COMPLETION
+============================================================
+
+This is a very large, long-term project. Do not treat the features above as optional ideas or a short-term mockup. Treat them as the full target scope. The total codebase may contain many tens of thousands of lines if the real implementation requires it. There is no arbitrary cap on total code length or number of files. The strict per-file limit remains below 450 source lines.
+
+Implement features as real connected systems. Do not use TODOs, fake APIs, pseudocode, empty functions, inactive UI buttons, static NPCs presented as AI, non-drivable vehicles presented as functional, empty building shells presented as interiors, random map markers disconnected from geography, or audio loops disconnected from game events. Do not claim a feature works merely because its name appears in a menu.
+
+Prefer a well-designed, complete implementation over a rushed collection of superficial checkboxes. Build the world and systems in integrated phases while preserving everything already working. Maintain a clear feature-completion tracker and update it truthfully. When a feature depends on an unavailable external asset or unsupported browser API, explain the actual limitation and implement the best valid fallback. Never claim guaranteed zero bugs or perfect performance; instead, test systematically, report what was actually verified, and fix newly introduced regressions as part of normal engineering quality.
+
+Use real, documented Babylon.js and browser APIs. Do not invent library classes, methods, browser capabilities, or package names. Keep imports and exports explicit and consistent. Use meaningful TypeScript types, interfaces, error handling, and cleanup. Dispose of scenes, meshes, textures, observers, audio nodes, event listeners, timers, and physics bodies when no longer needed.
+
+Keep each new feature's files focused and below 450 lines. Add as many submodules as required rather than placing all code in a handful of files. Preserve the existing project's established structure unless there is a clear, documented architectural reason to improve it.
+
+Work directly in the actual project files available in Google AI Studio. Do not respond only with a plan or with promises to work later. Begin implementing the highest-priority missing systems in the current work session, make concrete file changes, and clearly report which features are now genuinely implemented versus still pending. Do not pretend to run tests, build commands, inspect browser output, or push to GitHub unless those actions were actually available and completed.
+
+============================================================
+25. GITHUB AND PROJECT DELIVERY
+============================================================
+
+Keep the project organized for GitHub. If an authenticated GitHub connection or authorized repository integration is available, use it to create or update the intended repository and commit the real project files incrementally. Preserve project history and existing files. Never overwrite or delete work without a clear reason.
+
+If GitHub access is not available, do not claim that anything was uploaded. Continue working in the available project workspace and clearly state that repository authorization or a supported GitHub connection is required for a direct push. Never ask me to paste passwords, private keys, or access tokens into chat. Use the platform's secure authorization flow where available.
+
+============================================================
+26. PRIORITY ORDER FOR THE COMPLETE FEATURE SET
+============================================================
+
+Use this order as an implementation roadmap, while continuing to integrate related systems rather than treating them as isolated demos:
+
+A. Establish the complete world data model, irregular Leonida geography, heightmap terrain, coastlines, rivers, lakes, islands, biomes, and world streaming.
+B. Build the coherent full-color map, minimap, GPS, roads, bridges, intersections, traffic-light network, road materials, signs, and region labels.
+C. Build the high-quality city, rural towns, ports, airport, landmarks, architecture, interiors, beaches, vegetation, wildlife, and environmental detail.
+D. Upgrade the rendering pipeline, PBR materials, sunlight, shadows, reflections, water, atmosphere, weather, night lighting, and wind animation.
+E. Complete protagonist control, character switching, first/third-person cameras, animation, interaction, and contextual movement.
+F. Complete the vehicle ecosystem, vehicle physics, customization, traffic AI, aircraft, watercraft, swimming, diving, and environmental physics.
+G. Complete NPC routines, pedestrian behavior, crowds, wildlife, traffic signals, cinematic police/emergency simulation, and dynamic world events.
+H. Complete missions, side activities, progression, economy, properties, shops, service locations, and persistent world interactions.
+I. Complete the smartphone apps, HUD, pause map, menus, settings, localization, map search, and controller guide.
+J. Complete the Web Audio API soundscape, original synthwave radio, controller support, optimized iPad touch controls, fullscreen behavior, and capability-aware haptics.
+K. Complete save/load, asset management, performance presets, streaming, memory handling, accessibility, and ongoing feature audits.
+
+The order is a roadmap, not permission to omit later systems. Keep the entire scope active until each feature has a real implementation or a clearly documented technical limitation.
+
+============================================================
+FINAL PROJECT DIRECTIVE
+============================================================
+
+Build Leonida Legacy as a large, coherent, vibrant, photorealistic open-world browser game. Preserve and extend the master prompt already submitted. Include every feature and upgrade in this consolidated specification. Use the six official Leonida region anchors and the expanded eight-zone geography from my previous map brief. Use extra district, road, and landmark names carefully, distinguishing official names from user-provided or community-derived working labels.
+
+The visual target is a bright tropical world with turquoise water, pale-gold beaches, lush green vegetation, warm pastel Art Deco architecture, glass city towers, detailed roads, highly finished vehicles, realistic reflections, rich lighting, animated palms, active traffic, pedestrians, aircraft, boats, weather, and a dense living world. The gameplay target is a fully interactive world with meaningful systems, not a static graphics demo.
+
+Do not reduce the scope to a small prototype, do not compress the code into a few files, do not replace requested systems with placeholders, and do not report planned features as completed. Build the complete project incrementally, with unlimited modular source files under the strict 450-line-per-file rule, real integration, truthful progress reporting, and performance-aware quality suitable for iPad and desktop browsers.
+
+THIS IS ONLY THE BEGINNING OF A MUCH LARGER PROJECT. I WILL CONTINUE ADDING MAJOR UPGRADES, NEW SYSTEMS, EXPANSIONS, AND ADDITIONAL VISUAL REFERENCE IMAGES IN FUTURE UPDATES. Design the architecture so these future expansions can be integrated without rewriting the entire game or removing existing functionality.
+
+
+======================================================================
+27. STRICT FACTUAL GEOGRAPHY, VERIFIED BUILDING PLACEMENT AND SOURCE OF TRUTH
+======================================================================
+
+THIS SECTION IS A MANDATORY ACCURACY OVERRIDE FOR THE ENTIRE PROMPT.
+It supplements the previous sections. Do not delete, shorten, overwrite or silently remove any earlier feature, district name, landmark name, world zone, or requirement. However, when an earlier sentence gives an uncertain placement, approximate elevation, spelling, or speculative geography, use the evidence hierarchy and verification rules below before turning that statement into an actual in-game location. Preserve every earlier name in the project documentation, but do NOT present an unverified name or placement as confirmed fact.
+
+ABSOLUTE NO-GUESSING RULE:
+Never guess where a building, business, landmark, road, bridge, island, district, airport facility, port facility, river, lake, park, or other named point of interest is located. Never place a named building at an invented coordinate merely because its name sounds as though it belongs in a particular district. Never invent a street address, map coordinate, distance, direction, neighboring building, road connection, elevation, county assignment, or building footprint. Never use a fan-made speculative pin as though it were an official Rockstar coordinate.
+
+Every named location must have a source record before it is placed:
+- Exact displayed name and canonical spelling.
+- Category (major region, county, city, district, island, water body, road, landmark, business, public facility, or other POI).
+- Source URL or supplied-reference-image identifier.
+- Evidence type: official printed map label, official Rockstar screenshot, official Rockstar caption/description, directly visible signage, or a clearly identified secondary/community interpretation.
+- Its exact position on the official printed Leonida map, recorded as poster-image pixel coordinates or normalized map coordinates (u, v), plus the printed grid cell if available.
+- Any independently supported relationship to a district, county, road, island, or neighboring landmark.
+- Confidence/status: OFFICIALLY LABELLED, VISUALLY CONFIRMED, SECONDARY CROSS-CHECK ONLY, or UNVERIFIED / POSITION UNKNOWN.
+- Date the source was checked.
+
+A place label's position on the printed official map is the geographic anchor. Trace and digitize the label and corresponding visible mapped feature from the actual map image; do not estimate its position from memory, a textual list, or a fan-made map. If the official map marks only a town, island, district, or broad area, place only that area-level feature. Do not invent the precise address or footprint of an individual building within it.
+
+EVIDENCE HIERARCHY — FOLLOW IN THIS ORDER:
+1. The actual official Rockstar Leonida printable map, downloaded from Rockstar's own GTA VI Media page. Use the original high-resolution map image, not a compressed thumbnail or a fan redraw. This is the primary source for the printed names, county boundaries, map grid, road labels, water labels, and relative geographic placement.
+2. Rockstar's official GTA VI screenshots, trailers, Extended Look, official descriptions, captions, and other official material. Use these to identify what a named building or location actually looks like and to confirm a placement only where the scene, sign, caption, route, or other evidence supports it.
+3. The two Leonida map reference images I supplied earlier in this project. Use them as additional direct visual references for the overall land silhouette, coastline, rivers, islands, road layout, color distribution, and Vice City / wetland detail. Do not replace them with a speculative fan map.
+4. Reputable community mapping projects may be used only as secondary cross-checks or research indexes. Clearly mark their estimates as community estimates. They must never override the official map or official Rockstar material.
+5. General Florida geography may inspire natural-looking environmental detail, but it must never be used to invent the fictional game's named locations or their coordinates.
+
+OFFICIAL ROCKSTAR REFERENCE PAGES:
+- Rockstar GTA VI Media / Downloads page, including the official "Leonida Map & Cover Art Poster": https://www.rockstargames.com/VI/media
+- Rockstar official GTA VI screenshots: https://www.rockstargames.com/VI/media/screenshots
+- Official GTA VI main page and descriptions: https://www.rockstargames.com/VI
+
+The official Leonida printable map was published by Rockstar on November 19, 2026. Use the currently available official poster from Rockstar's Media page as the map source of truth. Do not use an older fan map as the final geographic authority when the official poster is available.
+
+CANONICAL HIGH-LEVEL GEOGRAPHY:
+Rockstar's six major region anchors are:
+1. Vice City.
+2. Leonida Keys.
+3. Grassrivers.
+4. Port Gellhorn.
+5. Ambrosia.
+6. Mount Kalaga National Park.
+
+The official map identifies five counties:
+- Lummox County — the hilly northern county.
+- Leonard County — the area around Lake Leonida, Belville, and Waning Sands.
+- Kelly County — the western county around Port Gellhorn.
+- Vice-Dale County — home to Vice City and its international airport.
+- Mariana County — the southern wetland area around Grassrivers.
+Use the official map boundaries and labels to reproduce their actual shapes and placement. Do not create new county borders or move the counties to make the map layout easier.
+
+GEOGRAPHIC RELATIONSHIPS THAT ARE SUPPORTED BY THE MAP AND CROSS-CHECKED LOCATION REFERENCES:
+- Vice City is in the southeastern part of Leonida, in Vice-Dale County.
+- Vice Beach is the barrier-island coastal area facing Vice City. Ocean Beach and Washington Beach are districts of Vice Beach; Washington Beach is the northern district and Ocean Beach is the southern district. Keep their coastline and street placement aligned with the official map and screenshots.
+- Vice City Lagoon lies between the mainland city and Vice Beach. It contains the port area and islands including Starfish Island and the Rialto Islands.
+- Downtown is the waterfront business center on the lagoon. Sahara Arena is in Downtown. Megamundo is identified in location references as a Downtown landmark; use the exact official-map/screenshot anchor for its placement rather than inventing a street address.
+- Tequesta is the financial high-rise district south of Downtown.
+- Bayside is the residential tower district north of Downtown.
+- Crosstown is a working-class district near the Interstate 404 / Interstate 97 interchange. Do not place its named buildings away from that supported district/interchange relationship.
+- Little Cuba is Vice City's Cuban district. La Perle is the Haitian district. Keep these separate and use their mapped positions, not a guessed Miami-style layout.
+- Stockyard is a Vice City district of shops and workshops. Stock 305 and Electric Fang Tattoo are associated with Stockyard; do not move them into another district.
+- Tisha-Wocka is the Vice City flea-market area. Its exact map position must come from the printed map and official visual references.
+- Southside is a southern Vice City district.
+- Vice Beach includes Ocean Beach, Washington Beach, and the barrier-island / lagoon-side geography shown on the map.
+- The Admiral Causeway is the southern causeway linking Downtown to Ocean Beach across the lagoon.
+- The Rialto Causeway crosses the lagoon from Bayside toward Vice Beach through the Rialto Islands. Rivo Bridge links the Rialto Causeway to the mainland on the Bayside side.
+- Starfish Island is an artificial luxury-villa island in the Vice City Lagoon. Preserve its mapped island position and do not replace it with a generic island elsewhere.
+- VC Port / Port Vice City is the cruise and container-port area shown by the official map and screenshots. Use the map's label and coastline to position docks, terminals, container yards, shipping channels, cranes, and vessels.
+- VCI Airport / Vice City International Airport is in Vice-Dale County and is connected to Vice City by the mapped road network. Use the printed airport footprint and screenshots for terminal, runway, taxiway, and control-tower placement.
+- Hamlet is a small southern mainland town near the prison area. Hamlet Correctional Institution and Leonida State Prison are separately named map landmarks; do not conflate them or invent their exact adjacency beyond what the map shows.
+- Ambrosia is associated with the south-western shore of Lake Leonida. Allied Crystal is the large sugar refinery landmark surrounded by sugarcane fields. Ambrosia Raceway Park is associated with Ambrosia and the US Route 35 exit signage.
+- Lake Leonida is a major north-central freshwater lake. Its exact shoreline and neighboring settlements must be traced from the official map.
+- Port Gellhorn is on the western Gulf coast in Kelly County. Its docks, old coastal-town fabric, road links, and nearby landmarks must be placed from the official map and official screenshots.
+- Grassrivers is the wetland / swamp region in southern Leonida, associated with Mariana County. Its channels, marshes, islands, and roads must follow the mapped waterways and coastline.
+- Mount Kalaga National Park is in northern Leonida, along the northern highlands. Its forest, rivers, mountains, trails, and visible landmarks must follow the official map and screenshots.
+- Leonida Keys form the southern island chain. Key Lento and Mile Zero Air Station must be placed at their actual positions on the official map, not assigned invented coordinates.
+
+IMPORTANT SPELLING / ALIAS HANDLING:
+The official map uses "Waxman Island". An earlier prompt contained "Wakman Island". Do not delete that earlier text; keep "Wakman Island" in the legacy alias/notes record, but use "Waxman Island" as the canonical mapped spelling unless the supplied original image proves otherwise. Apply the same rule to every spelling discrepancy: preserve the old string in documentation while choosing the official printed spelling for the live map label.
+
+OFFICIAL MAP PLACE-NAME INDEX — KEEP SPELLING AND PLOT EACH LABEL FROM ITS ACTUAL PRINTED POSITION:
+Abismo Key; Ambrosia; Balsero; Bayside; Belpoint; Belville; Big Pine; Bluegrass; Bobcat Key; Bonanza; Breakwater Quarry; Buckskin Swamp; Capri; Casanova Island; Catalan Island; Catalan Key; Corsair Key; Crosstown; Crude Islands; Dalton Island; Decor District; Downtown; Draper Island; East Lummox County; Emerald Springs; Featherstone Islands; Frampton Islands; Frogswater; Gellhorn; Gloriana Key; Goose Key; Grassrivers; Grayson; Hamlet; Hyde Island; Kelly County; Key Lento; La Perle; Leaf Links; Leonard County; Little Cuba; Little Hardin Island; Lummox County; Manifest Canyon; Mariana County; Maroon Key; Millport; Moreau; Mount Kalaga National Park; North Kelly County; North Leonard County; Ocean Beach; Oldby Island; Peacock Bay; Pelican Valley; Penmarch Isle; Permit Keys; Port Gellhorn; Rialto Islands; Richard Barebone State Park; Riquezas Keys; Rockridge; Saint Attaway Islands; Salton; Sandbars; Shoeless Keys; South Kelly County; South Leonard County; South Vice-Dale; South West Lummox County; Southside Vice City; Southwind; Starfish Island; Stockyard; Tequesta; Tequesta Retreat; Vespucci Island; Vice Beach; Vice City; Vice-Dale County; Vinewood Beach; Waning Sands; Washington Beach; Washington Island; Watson Bay; Waxman Island; West Vice-Dale County; Wild Hog Point; Zephyr Islands.
+
+OFFICIAL MAP LANDMARK INDEX — PLACE EACH ONLY AT ITS ACTUAL MAP POSITION:
+Allied Crystal sugar refinery; Ambrosia Raceway Park; Ambrosia Rodeo Association; Boone Speedway; Cellerica; Chateau Cellerica; Courtland Park; Evergreen Mall of Waning Sands; Father Scrumpy's Red Apple Orchard; FLAM; Fleeca Field; Gellhorn Raceway; Hamlet Correctional Institution; Henry J Edwards Airport; Howe Dairy; Leonida State Prison; MacAlister Gold Mine; Mile Zero Air Station; Mount Hailes Country Club; Paradise RV Park; Peacock Estates; Sabal Palms; Sahara Arena; Sahara Network Data Center; Salton Memorial Island; T.H. Power Station; Tallaloko Lakeside Resort; Thrillbilly Mud Club; Tisha-Wocka flea market; Tucker's Citrus Farms; VC Port; VCI Airport; Vice City Oceanarium; Wild Hog Airfield.
+
+OFFICIAL MAP ROAD LABEL INDEX:
+County Route 62; Interstate 97; Interstate 297; Interstate 397; Interstate 404; State Route 1A; U.S. 35; U.S. 82; U.S. 183; U.S. 628. Trace each route from the official map. Do not substitute old speculative route numbers when they conflict with the official map. Preserve earlier route numbers only as legacy/unverified notes.
+
+OFFICIAL MAP WATER LABEL INDEX:
+Bobcat Bight; Borrachero Sound; Burial Creek; Capri Sound; Catalan Bay; Cottonmouth Lake; Draper Bay; Emerald River; Gambit Bay; Gulf of Leonida; Gullet Marsh; Lake Leonida; Lake Tallaloko; Leonida Bay; Leonida Straits; Millport Basin; Moreau River; Nehrling River; Okchiloha Bay; Partridge Bay; Pelican River; Peregrine Bay; San Malo Bay; Three Toe Lake; Tola Bay; Tortoise Lake; Wetman Bay. Trace the visible water body geometry and labels from the official poster. Never invent a river course, bay boundary, island, or connection between water bodies.
+
+LANDMARK PLACEMENT RULE:
+The lists above identify names, not permission to invent a building's location. For individual buildings and businesses not printed on the official poster, use an official screenshot with visible contextual geography, readable signage, or an official description that establishes the district. If only the district is known, store the building as district-known / exact-position-unconfirmed and do not place it at a fabricated street corner. If the building is only named in a secondary guide or fan map, mark it secondary-only and do not treat that placement as canonical. Do not create a fake exact in-world replica of a location that has not been shown or mapped.
+
+MAP DATASET AND COORDINATE WORKFLOW:
+1. Obtain the high-resolution official poster from Rockstar's Media page.
+2. Preserve the source image unchanged as the master 2D geographic reference.
+3. Establish a stable image coordinate system using poster pixel coordinates and the printed grid.
+4. Digitize the visible coastline, county boundaries, islands, roads, waterways, and every printed place/landmark label.
+5. Store each mapped feature in one canonical geospatial dataset with source metadata and confidence status.
+6. Convert poster coordinates to the game's world coordinates using one documented transform. Keep the transform deterministic and reversible.
+7. Build 3D terrain, roads, bridges, buildings, waterways, map, minimap, GPS, POI markers, and streaming boundaries from this same dataset.
+8. Validate alignment visually by overlaying the rendered full map against the official poster at matching scale and orientation. Check the entire landmass, not only Vice City.
+9. Any place that cannot be located from evidence must remain unplaced until evidence is available. Do not fill unknown spaces with guessed named landmarks.
+
+The official poster is a 2D tourist-style map, not a published engineering elevation model. It does not provide precise terrain heights or every building footprint. Therefore, keep the old numeric elevation values in this prompt as adjustable artistic targets only, not as verified Rockstar measurements. Derive visible terrain forms from official screenshots and supplied reference images. Do not claim exact surveyed heights or exact building footprints without source evidence.
+
+======================================================================
+28. NEW MANDATORY QUALITY PILLAR — EXTREME REALISM, PHYSICS, ANIMATION, ENGINE, AUDIO, GRAPHICS, TEXTURES, DENSITY AND AI
+======================================================================
+
+This is a separate, top-level quality requirement applying to EVERY part of Leonida Legacy, not just the main city or hero assets. Do not interpret it as a cosmetic post-processing request. The world must achieve high fidelity through physically coherent simulation, convincing motion, layered sound, carefully authored materials, dense content, and systems that interact correctly.
+
+A. PHYSICS AND WORLD SIMULATION:
+- Use a coherent, stable physics architecture with appropriate collision shapes, mass, inertia, friction, restitution, constraints, damping, and continuous collision handling where needed.
+- Use a fixed or semi-fixed simulation timestep with interpolation for rendering. Keep gameplay simulation independent from fluctuating frame rate.
+- Build convincing character movement, ground contact, slopes, steps, ledges, collision response, jumping, climbing, swimming, buoyancy, and environmental interaction.
+- Build detailed vehicle dynamics: mass distribution, center of mass, suspension geometry, spring/damper behavior, wheel contact, tire grip, slip, steering response, drivetrain, torque curves, gearing, braking, weight transfer, traction control behavior, differential characteristics, rolling resistance, drag, downforce where appropriate, and damage-state changes.
+- Make vehicle handling and tire behavior respond visibly and audibly to asphalt, wet asphalt, concrete, sand, gravel, dirt, grass, mud, cobblestones, curbs, potholes, road seams, and water.
+- Aircraft need separate flight dynamics for lift, drag, thrust, pitch, roll, yaw, banking, climb, descent, rotor lift, propeller/turbine behavior, ground handling, takeoff and landing.
+- Boats need hull displacement, buoyancy, drag, steering, wave response, wake behavior, docking, and current/wind influence.
+- Water needs coherent wave motion, shoreline interaction, floating-object behavior, swimming, diving, buoyancy, water entry/exit, and boat wake response.
+- Environmental physics must include wind response for palms, trees, grass, reeds, flags, hanging signs, foliage, and water surfaces; rain accumulation, puddle growth, runoff, drying, and surface wetness.
+- Interactions between systems must be real: rain changes grip and visibility; terrain changes vehicle suspension and traction; wind affects vegetation, waves, and audio; time and weather change NPC routines and traffic.
+- Prevent jitter, tunnelling, unstable constraints, clipping, unwanted floating, foot penetration, vehicle sinking, wheels detaching, and physics/render desynchronization. Use debug visualization and repeatable tests.
+
+B. ANIMATION QUALITY:
+- Use high-quality skeletal animation, procedural animation, animation state machines, blending, inverse kinematics where appropriate, root motion or well-controlled motion extraction, foot planting, and transition smoothing.
+- Characters need believable idle variation, starts/stops, acceleration, turns, walking, jogging, sprinting, jumping, landing, stairs, slopes, crouch transitions where appropriate, climbing, swimming, diving, sitting, getting up, interacting, opening doors, entering/exiting vehicles, driving, and aircraft/boat operation.
+- Add upper-body/lower-body layering where appropriate, convincing hand placement, head/eye direction, facial expressions, breathing, posture shifts, and contextual gestures.
+- Driving animations must align hands with the steering wheel and show steering, gear changes, indicators, door interaction, and seated posture. Aircraft animations must align with cockpit controls. Boats must have believable steering and movement posture.
+- NPC animation must vary by age-appropriate appearance, clothing style, activity, mood, and environment. Prevent identical loops, synchronized crowd movement, skating feet, abrupt pose snapping, and frozen characters.
+- Cloth, hair, accessories, palm leaves, flags, and loose environmental elements should react naturally to movement and wind within the performance budget.
+- Camera transitions between third person, first person, vehicle cockpit, aircraft cockpit, boat view, photo mode, and cinematic view must be smooth, stable, and free of clipping.
+
+C. ENGINE AND RENDERING ARCHITECTURE:
+- Babylon.js remains the required 3D engine. Build a professional, integrated real-time rendering and simulation architecture rather than a collection of disconnected visual demos.
+- Use WebGPU when genuinely supported and stable; provide a tested WebGL2 fallback. Detect capabilities rather than assuming features exist.
+- Keep one authoritative scene lifecycle, render loop, simulation clock, physics world, input manager, camera manager, asset manager, audio manager, and world-state model.
+- Organize rendering into reusable systems for materials, lighting, shadows, reflections, water, atmosphere, vegetation, particles, decals, post-processing, LOD, instancing, and streaming.
+- Use realistic physically based light/material interactions. Do not simulate quality using extreme bloom, oversaturation, fake mirror reflections, or excessive sharpening.
+- Make the renderer's visual output consistent across day, sunset, night, rain, fog, wet roads, interiors, underwater scenes, and different regional biomes.
+- Build robust initialization, resize, device-loss recovery where available, context restoration where supported, resource disposal, and graceful fallbacks.
+
+D. EXTREME GRAPHICS AND VISUAL FIDELITY:
+- Target cinematic, highly photorealistic environmental rendering with strong but natural tropical daylight, accurate exposure, rich atmospheric depth, believable shadows, high-quality reflections, detailed surfaces, and realistic color response.
+- Use physically based lighting and material parameters, high-quality ambient occlusion, appropriate shadow filtering, reflection probes or screen-space/planar methods where useful, volumetric-looking atmosphere where feasible, and careful tone mapping.
+- Create distinct visual identity for every region: bright turquoise coastal waters and pastel Art Deco Vice City; lush green wetlands and dark shallow channels in Grassrivers; industrial coastal weathering in Port Gellhorn; agricultural and refinery detail in Ambrosia; forested rugged highlands in Mount Kalaga; and clear tropical shallows, reefs, sand, and bridge infrastructure across the Leonida Keys.
+- No flat, lifeless, generic environment. Maintain vibrant color, natural sunlight, readable shadows, and rich environmental activity without making every surface glossy or every scene artificially saturated.
+- Every hero car, aircraft, boat, character, landmark, and close-range environmental asset must have a high-detail silhouette, correct proportions, convincing materials, small-scale detail, and finished presentation.
+- Distant assets may use optimized LODs, but must retain coherent silhouettes, color, and believable transitions rather than suddenly switching to crude cubes.
+
+E. TEXTURE AND MATERIAL DETAIL:
+- Use high-quality material sets with albedo/base color, normal, roughness, metallic, ambient occlusion, height/parallax where justified, emissive, opacity/transmission, and clear-coat/detail maps where supported.
+- Use material-specific texture detail: asphalt aggregate, cracks, patches, tire wear, road paint, concrete pores, stone strata, sand grains, wet sand darkening, mud layers, wood grain, painted metal wear, brushed metal, rust, glass reflections, rubber, leather grain, fabric weave, skin, foliage translucency, water normals, and underwater sediment.
+- Avoid tiling repetition. Use texture variation, decals, vertex blending, procedural masks, dirt/wear layers, and region-specific palettes.
+- Use suitable texture resolutions and mipmaps based on visible screen size and device capability. Reserve the highest resolution for close-range hero assets and major landmarks; use streaming and LOD so iPad memory does not overflow.
+- Add convincing microdetail without excessive noise, shimmering, moiré, visible seams, UV stretching, z-fighting, or repetitive procedural patterns.
+- Vehicle paint requires metallic/pearlescent layers, clear coat, environment reflections, subtle scratches, dust, rain droplets, and configurable RGB underglow. Road surfaces require visible aggregate, cracks, patches, wet puddles, painted markings, drainage details, and surface-specific response.
+
+F. WORLD DENSITY AND DETAIL:
+- The game world must feel rich, occupied, and continuous. Build dense urban blocks with distinct building footprints, storefronts, signage, balconies, window variation, rooftop machinery, utility systems, parking structures, street furniture, vegetation, alley details, and believable service infrastructure.
+- Populate roads with a varied mix of vehicles and pedestrians according to district, time, weather, and event schedules. Avoid long empty stretches where the reference setting clearly suggests a busy area.
+- Give beaches umbrellas, loungers, towels, kiosks, lifeguard structures, beach paths, boardwalks, beach activity, small crowds, and coastal maintenance details.
+- Give ports container stacks, cranes, dock equipment, bollards, warehouses, service vehicles, vessels, navigation lights, and worker activity. Give airports runways, taxiways, aircraft stands, hangars, ground vehicles, terminals, signage, and aviation activity.
+- Give wetlands reeds, mangroves, cypress trees, mud banks, water channels, docks, wildlife, stilt structures, and rural roads. Give rural areas farms, fields, fences, power lines, barns, sheds, silos, roadside businesses, and rail infrastructure. Give mountain regions forests, rocks, streams, trails, overlooks, cabins, bridges, and ranger facilities.
+- Density must be spatially coherent: use heavier populations in business districts and events, moderate populations in neighborhoods and beaches, sparse populations in wilderness, and appropriate activity near facilities. Avoid simply increasing object counts uniformly.
+- Build buildings with believable interiors and room layouts where the game advertises interior access. Keep exterior and interior coordinates, doors, floors, stairways, elevators, lighting, collision, navigation, and audio occlusion consistent.
+
+G. ADVANCED NPC, CROWD, TRAFFIC AND WILDLIFE AI:
+- NPCs must be actual autonomous agents with schedules, goals, destinations, navigation, local perception, state, and contextual reactions—not static props or randomly wandering mannequins.
+- Use a suitable combination of behavior trees, state machines, utility scoring, schedules, goal selection, and navigation. Select methods appropriate to the complexity of each agent type.
+- Give each NPC persistent identity data where appropriate: appearance, clothing, role, home/work district, daily routine, preferred activities, relationships, current goal, and relevant memory of recent local events.
+- Build daily routines and location-specific behavior: commuters, shoppers, office workers, beachgoers, tourists, service employees, port workers, airport staff, park visitors, rural residents, nightlife crowds, and emergency responders.
+- NPCs should walk on valid sidewalks and paths, cross at designated crossings, avoid obstacles, queue where appropriate, enter and leave usable businesses, sit, talk, browse, shop, relax at the beach, work, travel, and react naturally to weather and events.
+- Crowd AI must support groups, conversations, social spacing, varied locomotion, locally appropriate density, collision avoidance, and believable reactions without making all nearby NPCs behave identically.
+- Traffic AI must use the same road graph as the map and GPS. Vehicles must obey traffic lights, lane directions, turn rules, yielding, speed limits, stop lines, parking rules, and vehicle-class restrictions. Add realistic lane changes, turn signals, merging, queueing, intersection negotiation, overtaking only where appropriate, and collision avoidance.
+- Police and emergency systems must be coherent fictional game simulations with dispatch feedback and safe, abstract gameplay presentation. Do not implement real-world tactical, evasion, or operational procedures.
+- Wildlife must be region-specific and react to proximity, weather, time, water, and habitat. Avoid identical synchronized animal loops.
+- NPC and traffic density must adapt to device performance while preserving visible activity near the player and important locations. Distant agents may use lower update rates and simplified behavior, but must remain consistent with their last known state.
+
+H. SOUND AND AUDIO ENGINE QUALITY:
+- Build a professional, event-driven audio system using the native Web Audio API as already specified in Section 16. Keep audio spatially aware where possible and connect it to actual physics, animation, environment, and gameplay events.
+- Use layered sound design rather than isolated generic beeps: engine fundamentals and harmonics, RPM and load response, tire/road noise, suspension movement, wind, rain, waves, birds, insects, crowd beds, room tone, aircraft/boat engines, traffic, machinery, and region-specific ambience.
+- Sounds must respond to distance, occlusion, interior/exterior state, velocity, engine load, surface type, weather, wind, water proximity, and camera context.
+- Create original radio music and original station identity in the requested Vice City 80s/synthwave direction. Use only original or properly licensed assets; do not reproduce copyrighted music or lyrics.
+- Avoid harsh repetition, obvious looping, audio clipping, runaway oscillators, desynchronized audio, and sounds continuing after their source entity is removed.
+- Provide robust audio initialization after user interaction, independent volume controls, mute, spatial attenuation, audio ducking for important UI/dialogue, and cleanup.
+
+I. MAP, PAUSE MAP, GPS AND MINIMAP — EXACT 1:1 REQUIREMENT:
+- The world map is a critical feature and must be constructed directly from the official Leonida map poster and the two user-supplied map reference images.
+- Trace the entire coastline, barrier islands, peninsulas, inlets, bays, rivers, lakes, wetlands, roads, highways, bridges, county boundaries, region boundaries, and printed labels. Preserve the full irregular silhouette and correct orientation. Do not simplify the full state into a square or generic grid.
+- The 3D world, pause map, minimap, GPS, mission navigation, district labels, street signs, and POI markers must all use the same canonical coordinate database. A single mapped location must never appear in different places on different interfaces.
+- Build the pause map as a detailed, polished, full-colour cartographic/satellite-style interface with real coastlines, sea depth colors, wetlands, green spaces, roads, rail where present, bridges, district blocks, islands, terrain shading, location names, POI icons, and clear road hierarchy.
+- Build the minimap as a faithful cropped and rotated view of the same source map, not a separately drawn approximation. It must track the player, show orientation, nearby roads, intersections, water, bridges, district boundaries, destination, route, mission markers, and relevant nearby POIs at the correct positions.
+- Implement high-quality zoom, pan, map rotation, north-up toggle, route selection, search, filters, legend, layers, destination setting, player recentering, and contextual icons. Keep labels readable at all zoom levels and prevent overlap intelligently without moving the underlying geographic anchors.
+- GPS routes must follow the real in-game road/bridge/path graph and respect water, one-way roads, highway ramps, drawbridges, pedestrian paths, and vehicle restrictions. Do not draw a straight line through buildings, water, or terrain when a traversable route exists.
+- Validate the map against the official poster with image overlays and coordinate checks. Check the full map, county boundaries, regional labels, islands, all major water bodies, and roads. Then separately validate Vice City at high zoom.
+- Never fake 1:1 accuracy. If some detail is obscured, too small to read, or absent from the official map, record it as unresolved. Keep the known geography exact and leave the unknown geometry unclaimed rather than guessing.
+
+J. PERFORMANCE WHILE PRESERVING REALISM:
+- Optimize through instancing, thin instances, batching, LOD, occlusion culling, texture streaming, mesh reuse, object pools, spatial partitioning, asynchronous loading, physics broadphase, distance-based AI updates, and scalable particle/audio budgets.
+- Use high detail for assets near the player and progressive simplification only at distance. Keep silhouettes, material identity, light behavior, and animation coherent at all LOD levels.
+- Provide Performance, Balanced, High, and Ultra presets. Include user controls for draw distance, shadows, reflection quality, water, vegetation, traffic, NPC density, texture quality, anti-aliasing, and post-processing.
+- Detect real device capabilities and choose a stable initial profile. Never crash the browser or exhaust iPad memory in pursuit of an impossible quality target.
+- The quality objective is maximum achievable visual and simulation fidelity on the target device, not unsupported claims of infinite detail, universal ray tracing, perfect physics, or guaranteed zero bugs.
+
+K. QUALITY VERIFICATION:
+- Build feature-level tests for physics, map alignment, navigation, NPC routines, traffic-light compliance, animation transitions, audio event routing, save/load, responsive UI, and controller/touch input.
+- Use repeatable test scenes and checkpoints. Verify that every visible interactive button triggers its intended action and every advertised drivable vehicle, aircraft, boat, map tool, smartphone app, and mission system actually works.
+- Maintain a living quality checklist with PASS / PARTIAL / NOT IMPLEMENTED / BLOCKED BY PLATFORM status. A feature is not complete merely because a model, label, menu, or function stub exists.
+- Report actual tested results. Do not promise 0% bugs as a factual guarantee. Continue eliminating bugs discovered during implementation and clearly report any limitation.
+
+======================================================================
+29. FINAL OVERRIDE — PRESERVE EVERYTHING, BUT NEVER INVENT FACTS OR LOCATIONS
+======================================================================
+
+Keep every earlier feature and requirement in this document. This addendum is an extension, not a deletion. Where any earlier content conflicts with the verified official map, use the official map's spelling and placement for the actual game while retaining the older wording as a documented legacy alias or unverified note. The old eight-zone organization remains useful as a detailed gameplay/streaming breakdown; it must fit within the six official major-region hierarchy and five official county boundaries rather than inventing new official regions or counties.
+
+Do not invent exact building locations. If a name is known but its exact location is not established, preserve the name, mark its placement as unknown, and do not place a named building on the live map until evidence establishes the location. It is acceptable to fill unnamed city blocks with original fictional architecture, but do not attach a false official name or false landmark identity to those buildings.
+
+The target result is an exceptionally detailed, densely populated, highly realistic and fully interconnected open world: extreme physics fidelity, precise animations, high-quality engine architecture, immersive sound, photorealistic graphics, deeply layered PBR textures, rich environmental density, advanced autonomous NPC and traffic AI, and an exceptionally accurate full-state map and minimap derived from the official Leonida map and my supplied references.
+
+THIS PROJECT REMAINS A LONG-TERM EXPANSIVE PROJECT. Preserve everything already requested and implemented. Add future systems without removing existing functionality or corrupting the canonical world data.
+
+======================================================================
+30. LONG-TERM MULTI-RUN DEVELOPMENT RULE — THIS PROJECT MUST BE BUILT IN MANY ROUNDS
+======================================================================
+
+IMPORTANT: I fully understand that a project of this size cannot realistically be completed in one Gemini response, one generation, or one development run. Do NOT attempt to pretend that the entire game can be finished in a single run. This is an intentional, long-term, multi-round development project. I will return repeatedly and give you the reusable START / CONTINUE prompt included in Section 31. In every development round, I will also attach this latest complete Ultimate Mega Prompt and upload ALL relevant visual and map reference images again, so the full requirements and visual ground truth remain available to you.
+
+HOW EVERY DEVELOPMENT ROUND MUST WORK:
+1. Treat this entire document as the permanent master specification and source of truth for the full project scope. The reusable prompt in Section 31 is the instruction for the current development round; it does NOT replace, shorten, or override this master specification.
+2. At the beginning of every round, inspect the actual current project files, project structure, feature registry, recent changes, current build output, and available browser/live-preview console. Do not assume that previous chat memory is complete or that a previously promised feature was actually implemented.
+3. Re-open and analyze ALL reference images uploaded for that round. Maintain a reference inventory and note which images were actually accessible. Use the official Rockstar map and the uploaded map images as the geographical source of truth. Never invent coordinates or named building locations.
+4. Compare the real project state against EVERY section and requirement in this complete master prompt. Reconcile the feature registry with the code. Mark each feature as IMPLEMENTED AND VERIFIED, IMPLEMENTED BUT NOT VERIFIED, PARTIAL, NOT IMPLEMENTED, or BLOCKED BY A CONFIRMED PLATFORM / ASSET LIMITATION.
+5. Choose a meaningful, connected batch of unfinished work for the current run. Prioritize dependencies and the highest-value systems, but do not silently drop lower-priority features. Work directly in the actual project. Make real code and asset changes, not merely a plan or a promise.
+6. Finish the selected batch to a coherent integration point. Run the available build, type checks, tests, and live-preview checks. Fix regressions caused by the current changes. If a test or tool is unavailable, state that clearly rather than pretending it passed.
+7. Update the feature registry, file manifest, test results, reference/source records, and a concise CONTINUATION / NEXT-RUN REPORT. Record exactly what changed, where it changed, what was tested, what is still incomplete, and the next recommended tasks.
+8. If the context window, generation limit, or available run time is reached, stop at a safe checkpoint. Do not corrupt working files, truncate the project, or falsely announce completion. Leave a precise continuation report so the next run can resume from the real project state.
+9. On the next round, repeat this process from the actual current project state. Do not restart the project, recreate already working systems, overwrite good work, or forget earlier requirements. Integrate and improve what already exists.
+
+THE MASTER PROMPT AND ALL IMAGES WILL BE RE-SUPPLIED:
+I will repeatedly attach this entire latest Ultimate Mega Prompt and upload all map and visual reference images again with my reusable START / CONTINUE prompt. Treat those attachments as deliberate reminders and primary project inputs. Analyze the images rather than relying on memory or a prior assistant's description. Create and maintain an image/reference inventory so no supplied image is silently ignored. If any attachment fails to load, explicitly identify the missing item; do not claim to have seen it.
+
+THE PROJECT MUST NOT BE DECLARED COMPLETE TOO EARLY:
+A single run, a successful build, a playable first scene, a beautiful screenshot, or a partially populated map is NOT completion. Do not call the project 100% complete just because the current batch is finished. Do not reduce the quality target to fit one response. The complete scope remains active across as many development rounds as necessary.
+
+FINAL 100% ACCEPTANCE STANDARD — NON-NEGOTIABLE:
+The project may be reported as 100% complete ONLY when every feature in the original master prompt, this entire document, all accepted upgrades, and all reference-image requirements has been implemented, integrated, and verified against its actual acceptance criteria. This includes, without omission:
+- The complete Leonida open world with the correct official six-region hierarchy, all required mapped subareas, verified location placement, realistic 3D terrain and coastlines, and no invented named locations.
+- A genuinely accurate, highly detailed, full-color pause map, minimap, GPS, route network, street labels, POI database, and 3D world that all share the same canonical coordinate system and match the official map and uploaded references as closely as the source evidence allows.
+- The full requested visual quality, asset quality, material quality, environmental detail, world density, animation quality, sound quality, physical behavior, simulation depth, and NPC/traffic intelligence. No lowering the target to primitive geometry, empty streets, generic repeated buildings, basic placeholder models, fake reflections, disconnected systems, or superficial menu-only features.
+- Fully functional and interconnected player, character, camera, vehicle, aircraft, watercraft, water, weather, traffic, NPC, wildlife, police/emergency, mission, activity, economy, property, smartphone, HUD, menu, map, audio, controller, touch, haptic, save/load, and performance systems described in this document.
+- Every advertised interactive feature actually works in the running game. No fake buttons, placeholder apps, decorative-only vehicles advertised as drivable, static NPCs advertised as intelligent, empty shells advertised as interiors, or audio controls disconnected from actual sound.
+- All source files follow the stricter modular rule in this master prompt: fewer than 450 lines per source file. The reusable round prompt mentions 500 lines as an outer ceiling, but this master prompt's stricter under-450-lines requirement takes precedence. Never create a source file with 450 or more lines; split it into focused modules.
+- The current project builds and renders in the target environment with no known build-blocking errors or known runtime errors in the tested scenarios. Run and document meaningful tests. Do not claim that literally zero bugs can ever exist; report verified results honestly and fix all known defects found during testing.
+- The extreme realism target is reached as closely as technically possible on the actual target devices, especially iPad and desktop. Use real capability detection and scalable quality settings, but do not use device optimization as an excuse to omit systems or make the world visually primitive. If an actual platform limitation prevents a specific feature, document it and implement the best supported fallback without falsely claiming full native support.
+
+A feature counts as complete only when its implementation, integration, presentation, behavior, persistence where relevant, and verification are complete. A class declaration, asset filename, menu item, TODO, test stub, screenshot, or verbal promise does not count as completion. Do not assign 100% based on optimism. The final completion report must include a requirement-by-requirement audit against this master prompt and the real codebase.
+
+======================================================================
+31. REUSABLE START / CONTINUE PROMPT — USE THIS AT THE BEGINNING OF EVERY RUN
+======================================================================
+
+I will use the following prompt repeatedly for every development round. Each time I use it, I will ALSO attach the latest complete version of this Ultimate Mega Prompt and upload ALL visual reference images and BOTH Leonida map reference images again. Read all attached materials together. This reusable prompt starts the next round; the attached Mega Prompt remains the complete specification and must never be replaced by this shorter kickoff prompt.
+
+----- COPY-AND-PASTE START / CONTINUE PROMPT -----
+
+Continue the next development phase of LEONIDA LEGACY. I am attaching the complete, latest ULTIMATE GEMINI MEGA PROMPT and uploading ALL map and visual reference images again. Read and follow every attachment. The Mega Prompt is the complete, permanent specification for all features, geography, visual quality, realism, and final acceptance requirements. Do not omit, shorten, replace, or forget any of it.
+
+PERMANENT MODULAR ARCHITECTURE RULE — NEVER VIOLATE:
+- HARD CEILING: No source-code file may ever reach 500 lines. Split oversized files into focused sub-files with clean imports, exports, types, and ownership boundaries.
+- IMPORTANT: The attached Mega Prompt has an even stricter rule: every source file must remain STRICTLY UNDER 450 LINES. Follow the stricter rule from the Mega Prompt. Keep every source file below 450 lines, not merely below 500.
+- Before editing, inspect the entire codebase and identify every source file that violates the applicable file-size limit. Split oversized files cleanly without deleting features or changing behavior.
+- Whenever a change would make a file reach or exceed 450 lines, extract the new logic into clean modular sub-files before that happens.
+- The total codebase and number of files are unlimited. Use as many well-organized modules as the project needs. Never compress the game into a few giant files.
+- No placeholders, stubs, fake systems, empty functions, disconnected buttons, or TODOs presented as completed work.
+
+FIRST — AUDIT THE REAL CURRENT PROJECT:
+Inspect the actual current source files, project structure, feature registry, dependency graph, installed packages, build output, TypeScript diagnostics, and available browser/live-preview console. Run the real build and relevant checks using tools that are genuinely available in this environment. Identify and fix current build, import/export, duplicate declaration, TypeScript, WebGPU/WebGL2 initialization, asset-loading, integration, and runtime errors across the relevant project files. Verify that the game actually renders in the live preview. Do not mistake unrelated hosting or preview-service noise for a game defect without evidence. Do not claim that a command, browser inspection, test, or fix succeeded unless you actually performed and verified it.
+
+SECOND — RE-ANALYZE ALL ATTACHED REFERENCE IMAGES:
+Inspect every image attached to this run. Use the official Rockstar Leonida map and the two supplied Leonida map references as the geographic ground truth for coastline, islands, road alignments, rivers, lakes, region relationships, labels, and landmarks. Use the supplied car, beach, city, and other visual references as the direct quality/style target for materials, lighting, colors, reflections, geometry, detail, and atmosphere. Do not rely on memory when the image is attached. Do not guess any building, road, bridge, district, landmark, or POI position. Use the source hierarchy and source-record rules in the Mega Prompt. If exact placement cannot be proven, preserve the name but mark its position UNVERIFIED / UNKNOWN and do not place it at invented coordinates.
+
+THIRD — IMPLEMENT ALL REMAINING FEATURES IN CONNECTED PHASES:
+Compare the real codebase with the entire attached Mega Prompt and every requirement across the project history. Continue implementing and integrating every remaining requested feature. Do not stop after fixing errors or after making the first scene render. The complete scope includes, among all other requirements in the Mega Prompt:
+- The complete 1:1 organic Leonida and Vice City world, all six official regions, required districts and subregions, terrain/elevation, verified landmarks, coastlines, islands, waterways, roads, bridges, and regional environmental detail.
+- A highly accurate full-color 1:1 world map, pause map, minimap, GPS, route system, road/street labels, POIs, and player navigation that use the exact same canonical coordinates and data as the 3D world. The map and minimap must be exceptionally detailed, readable, correctly oriented, and geographically consistent with the supplied official map images.
+- Extreme realism across the entire game: physically believable physics and simulation; high-quality character, vehicle, aircraft, water, and environmental animation; robust Babylon.js engine/rendering architecture; high-end graphics, lighting, reflections, shadows, atmosphere, and visual effects; extremely detailed PBR materials and textures; realistic object scale and surface detail; rich world density and environmental variety; immersive spatial sound; and advanced, believable AI for NPCs, crowds, traffic, wildlife, police, and world events.
+- The complete vehicle ecosystem, sculpted detailed cars and interiors, customization, clear-coat water droplets, glossy paint, RGB underglow, tire/suspension/drivetrain physics, aircraft and helicopter flight systems, boats, swimming, diving, waves, buoyancy, and surface-specific physics.
+- Lucia and Jason, detailed NPCs, first-person and third-person modes, full animation systems, IK where appropriate, character switching, interactions, missions, activities, interiors, economy, properties, public transport, inventory, and progression.
+- Detailed roads, PBR asphalt and other surfaces, street furniture, traffic lights, realistic traffic behavior, map-linked navigation, dynamic weather, day/night simulation, tropical environmental effects, fire/smoke/impact visuals, and all requested environmental systems.
+- Fully functioning iFruit-style smartphone apps, HUD, menus, pause map, GPS, native Web Audio API soundscape, original 80s/synthwave radio, iPad multi-touch controls, PS5 DualSense support with context-sensitive button guide, supported haptics, fullscreen behavior, persistence, accessibility, and performance settings.
+
+FOURTH — WORK IN MULTIPLE RUNS; DO NOT PRETEND ONE RUN CAN FINISH EVERYTHING:
+This is a very large long-term project. I know that you may not be able to implement every system in one run. Do NOT claim that everything is finished after one batch. Select a substantial, logically connected group of remaining tasks for this round, implement them properly, integrate them, and test them. Preserve all existing working systems. When the current run reaches its context or execution limit, stop at a safe checkpoint and create a detailed continuation report. I will return with this same kickoff prompt, the latest complete Mega Prompt, and all reference images for the next round. Continue from the actual project state without restarting or losing progress.
+
+FIFTH — REPORT HONEST PROGRESS IN THE VERY FIRST RESPONSE:
+Before or while making changes, provide a concise but evidence-based audit:
+1. Estimated percentage of the total requested feature scope genuinely implemented and verified.
+2. Estimated percentage of the requested photorealism / visual-detail target genuinely achieved.
+3. The exact major items that are complete, partial, missing, or blocked.
+4. The precise files, errors, or features you are starting with in this run.
+5. Whether additional development rounds will be required to reach the full target.
+Do NOT invent exact percentages. Derive estimates from the actual codebase and feature registry, explain that they are estimates, and never count planned, stubbed, or unverified work as complete.
+
+SIXTH — TEST, TRACK AND PRESERVE:
+After each coherent batch, run the actual available build/type/test checks and inspect the live preview/browser console when available. Verify the affected systems and their integration with existing systems. Update the feature registry with IMPLEMENTED AND VERIFIED, IMPLEMENTED BUT NOT VERIFIED, PARTIAL, NOT IMPLEMENTED, or BLOCKED status. Record changed files, tests executed, real results, known issues, and the next recommended tasks. Do not delete existing features, discard project history, or overwrite working implementations without a documented reason.
+
+FINAL 100% REQUIREMENT:
+The project is NOT finished when this run ends, when the first playable prototype works, or when the build merely passes. It is finished ONLY when every single requirement in the attached Ultimate Mega Prompt and all accepted upgrades has been implemented to the requested extreme realism, visual detail, texture quality, environmental/object density, physics, animation, engine, audio, AI, geography, map/minimap accuracy, gameplay, and integration standard; all advertised systems genuinely work; and the complete requirement-by-requirement verification audit supports the 100% completion claim. Do not lower or redefine the target. Continue across as many rounds as necessary until that standard is genuinely met. Be honest about any platform limitation and never report an unverified feature as complete.
+
+Begin this development round now. Inspect the actual project, report the verified status, and implement the next substantial connected batch.
+
+----- END COPY-AND-PASTE START / CONTINUE PROMPT -----
+
+REMINDER FOR EVERY FUTURE ROUND: I will attach this entire latest Mega Prompt and re-upload ALL map and visual reference images together with the reusable kickoff prompt. Keep all of them active as one combined specification. Do not forget any feature, visual reference, geography rule, quality target, or final 100% acceptance criterion.

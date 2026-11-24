@@ -151,6 +151,10 @@ export interface VehicleTuning {
   metallic: number; // 0..1
   wheelType: 'stock' | 'sport' | 'offroad' | 'chrome';
   tireCompound: 'street' | 'sport' | 'allterrain';
+  underglowEnabled?: boolean;
+  underglowHex?: string;
+  underglowMode?: 'static' | 'pulse' | 'rainbow';
+  windowTint?: number; // 0..1
 }
 
 export type VehicleClass =

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import type { GameRuntime } from '../core/gameRuntime';
 import { formatMoney } from '../core/types';
 import { HackingMinigame } from './HackingMinigame';
+import { VehicleTuningApp } from './VehicleTuningApp';
 
 export type PhoneAppId =
   | 'home'
   | 'taxi'
   | 'mechanic'
+  | 'tuning'
   | 'stocks'
   | 'properties'
   | 'hack'
@@ -144,6 +146,10 @@ export const PhoneApps: React.FC<PhoneAppsProps> = ({ runtime, activeApp, onRefr
         {feedback && <div className="text-emerald-300">{feedback}</div>}
       </div>
     );
+  }
+
+  if (activeApp === 'tuning') {
+    return <VehicleTuningApp runtime={runtime} onRefresh={onRefresh} />;
   }
 
   if (activeApp === 'stocks') {
@@ -362,10 +368,11 @@ export const PhoneApps: React.FC<PhoneAppsProps> = ({ runtime, activeApp, onRefr
           <button
             key={s.name}
             type="button"
-            onClick={() => {
-              setStationIdx(idx);
-              runtime.audio.currentStation = s.name;
-            }}
+              onClick={() => {
+                setStationIdx(idx);
+                runtime.audio.setStation(s.name);
+                onRefresh();
+              }}
             className={`px-2 py-1.5 rounded text-left cursor-pointer ${
               idx === stationIdx ? 'bg-cyan-600 text-white' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
             }`}

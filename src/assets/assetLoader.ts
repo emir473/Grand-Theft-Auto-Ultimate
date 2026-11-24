@@ -139,6 +139,7 @@ export class AssetLoader {
         required: true,
         run: async () => {
           bank.createWaveNormalMap('ocean_normal', 256);
+          bank.createRainDropletNormalMap('rain_droplets', 256);
         },
       },
       // Optional non-blocking high-resolution textures

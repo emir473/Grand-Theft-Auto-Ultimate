@@ -11,6 +11,9 @@ import { GameOverOverlay } from './ui/GameOverOverlay';
 import { ActivityOverlay } from './ui/ActivityOverlay';
 import { TouchControls } from './ui/TouchControls';
 import { WorldMapOverlay } from './ui/WorldMapOverlay';
+import { ControllerGuideOverlay } from './ui/ControllerGuideOverlay';
+import { PhotoModeOverlay } from './ui/PhotoModeOverlay';
+import { InputManager } from './core/input';
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -30,6 +33,8 @@ export default function App() {
   const [wheelOpen, setWheelOpen] = useState(false);
   const [pauseOpen, setPauseOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [activityMode, setActivityMode] = useState<string | null>(null);
   const [minimapRotate, setMinimapRotate] = useState(true);
@@ -146,51 +151,84 @@ export default function App() {
 
       {ready && runtime && hud && (
         <>
-          <HudOverlay
-            runtime={runtime}
-            hud={hud}
-            minimapRotate={minimapRotate}
-            muted={muted}
-            onToggleMinimapRotate={() => {
-              const next = !minimapRotate;
-              setMinimapRotate(next);
-              runtime.registry.state.minimapRotate = next;
-            }}
-            onOpenWorldMap={() => setMapOpen(true)}
-            onOpenPhone={() => {
-              const next = !phoneOpen;
-              setPhoneOpen(next);
-              runtime.registry.state.phoneOpen = next;
-            }}
-            onOpenWeaponWheel={() => {
-              const next = !wheelOpen;
-              setWheelOpen(next);
-              runtime.weapons.setWeaponWheelOpen(next);
-            }}
-            onOpenPause={() => {
-              setPauseOpen(true);
-              runtime.registry.state.pauseMenuOpen = true;
-              runtime.registry.clock.setPaused(true);
-            }}
-            onOpenConsole={() => {
-              const next = !consoleOpen;
-              setConsoleOpen(next);
-              runtime.registry.state.consoleOpen = next;
-            }}
-            onSwitchCharacter={() => {
-              runtime.player.switchCharacter();
-              setHud(runtime.getHudSnapshot());
-            }}
-            onToggleDirector={() => runtime.combat.toggleDirectorMode()}
-            onToggleMute={() => {
-              const next = !muted;
-              setMuted(next);
-              runtime.audio.setMuted(next);
-            }}
-            onInteract={() => runtime.input.triggerVirtualKey('KeyE')}
-          />
+          {!photoOpen && (
+            <HudOverlay
+              runtime={runtime}
+              hud={hud}
+              minimapRotate={minimapRotate}
+              muted={muted}
+              onToggleMinimapRotate={() => {
+                const next = !minimapRotate;
+                setMinimapRotate(next);
+                runtime.registry.state.minimapRotate = next;
+              }}
+              onOpenWorldMap={() => setMapOpen(true)}
+              onOpenPhone={() => {
+                const next = !phoneOpen;
+                setPhoneOpen(next);
+                runtime.registry.state.phoneOpen = next;
+              }}
+              onOpenWeaponWheel={() => {
+                const next = !wheelOpen;
+                setWheelOpen(next);
+                runtime.weapons.setWeaponWheelOpen(next);
+              }}
+              onOpenPause={() => {
+                setPauseOpen(true);
+                runtime.registry.state.pauseMenuOpen = true;
+                runtime.registry.clock.setPaused(true);
+              }}
+              onOpenConsole={() => {
+                const next = !consoleOpen;
+                setConsoleOpen(next);
+                runtime.registry.state.consoleOpen = next;
+              }}
+              onOpenControls={() => setControlsOpen(true)}
+              onOpenPhotoMode={() => {
+                setPhotoOpen(true);
+                runtime.registry.state.photoModeActive = true;
+              }}
+              onToggleFullscreen={() => void InputManager.toggleFullscreen(canvasRef.current?.parentElement)}
+              onToggleCameraMode={() => {
+                runtime.toggleCameraMode();
+                setHud(runtime.getHudSnapshot());
+              }}
+              onCycleRadio={() => {
+                runtime.audio.cycleStation();
+                setHud(runtime.getHudSnapshot());
+              }}
+              onSwitchCharacter={() => {
+                runtime.player.switchCharacter();
+                setHud(runtime.getHudSnapshot());
+              }}
+              onToggleDirector={() => runtime.combat.toggleDirectorMode()}
+              onToggleMute={() => {
+                const next = !muted;
+                setMuted(next);
+                runtime.audio.setMuted(next);
+              }}
+              onInteract={() => runtime.input.triggerVirtualKey('KeyE')}
+            />
+          )}
 
-          <TouchControls input={runtime.input} />
+          {!photoOpen && (
+            <TouchControls
+              input={runtime.input}
+              mode={runtime.registry.state.touchControlsMode}
+              layout={runtime.registry.state.touchLayout}
+              opacity={runtime.registry.state.touchOpacity}
+              inVehicle={hud.inVehicle}
+              inAircraft={hud.inAircraft}
+              onToggleCamera={() => {
+                runtime.toggleCameraMode();
+                setHud(runtime.getHudSnapshot());
+              }}
+              onCycleRadio={() => {
+                runtime.audio.cycleStation();
+                setHud(runtime.getHudSnapshot());
+              }}
+            />
+          )}
 
           {phoneOpen && (
             <SmartphoneOverlay
@@ -236,6 +274,31 @@ export default function App() {
                 runtime.registry.clock.setPaused(false);
                 setMapOpen(true);
               }}
+              onOpenControls={() => {
+                setPauseOpen(false);
+                runtime.registry.state.pauseMenuOpen = false;
+                runtime.registry.clock.setPaused(false);
+                setControlsOpen(true);
+              }}
+            />
+          )}
+
+          {controlsOpen && (
+            <ControllerGuideOverlay
+              runtime={runtime}
+              onClose={() => setControlsOpen(false)}
+              onRefresh={() => setHud(runtime.getHudSnapshot())}
+            />
+          )}
+
+          {photoOpen && (
+            <PhotoModeOverlay
+              runtime={runtime}
+              onClose={() => {
+                setPhotoOpen(false);
+                runtime.registry.state.photoModeActive = false;
+              }}
+              onRefresh={() => setHud(runtime.getHudSnapshot())}
             />
           )}
 

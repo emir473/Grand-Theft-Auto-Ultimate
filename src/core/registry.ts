@@ -69,6 +69,13 @@ export interface CanonicalWorldState {
   consoleOpen: boolean;
   pauseMenuOpen: boolean;
   directorModeActive: boolean;
+  cameraMode: 'third' | 'first';
+  photoModeActive: boolean;
+  hapticsEnabled: boolean;
+  hapticsIntensity: number; // 0..1
+  touchControlsMode: 'auto' | 'on' | 'off';
+  touchLayout: 'right' | 'left';
+  touchOpacity: number; // 0.3..1
   gameOverState: 'none' | 'wasted' | 'busted';
   lastDeathEventId: string | null;
   lastArrestEventId: string | null;
@@ -222,6 +229,13 @@ export class GameRegistry {
       consoleOpen: false,
       pauseMenuOpen: false,
       directorModeActive: false,
+      cameraMode: 'third',
+      photoModeActive: false,
+      hapticsEnabled: true,
+      hapticsIntensity: 0.75,
+      touchControlsMode: 'auto',
+      touchLayout: 'right',
+      touchOpacity: 0.85,
       gameOverState: 'none',
       lastDeathEventId: null,
       lastArrestEventId: null,

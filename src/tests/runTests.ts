@@ -9,6 +9,8 @@ import { RoadNetwork } from '../world/roadNetwork';
 import { i18n } from '../ui/localization';
 import { SaveManager } from '../persistence/saveManager';
 import { SpatialAudioEngine } from '../audio/spatialAudio';
+import { SynthwaveRadioEngine } from '../audio/synthwaveRadio';
+import { GamepadManager } from '../core/gamepadManager';
 import { mpsToKmh, mpsToMph, formatMoney } from '../core/types';
 
 let passed = 0;
@@ -92,6 +94,20 @@ test('SaveManager serializes valid state & SpatialAudio Doppler math', () => {
   assert(snap.characters.lucia.position.z === -6, 'Starter point must be Star Island Villa courtyard');
   const doppler = SpatialAudioEngine.computeDopplerFactor(34.3);
   assert(doppler > 1.1 && doppler < 1.12, 'Approaching Doppler factor must be ~1.111');
+});
+
+test('SynthwaveRadio cycles stations & GamepadManager degrades safely headless', () => {
+  const radio = new SynthwaveRadioEngine();
+  const s1 = radio.currentStation.name;
+  const s2 = radio.cycleStation().name;
+  assert(s1 !== s2 && s1 === 'Wave 103.5 Vice', 'Radio must cycle to next 80s/tropical station');
+  radio.setStationByName('V-Rock Leonida');
+  assert(radio.currentStation.name === 'V-Rock Leonida', 'setStationByName must switch station');
+
+  const gp = new GamepadManager();
+  const sample = gp.poll();
+  assert(!sample.connected && !sample.hapticsSupported, 'Headless environment must report unconnected gamepad safely');
+  gp.triggerHaptics(1, 1, 100, true, 1); // Must not throw without navigator
 });
 
 console.log(`\nTest Summary: ${passed} passed, ${failed} failed.`);

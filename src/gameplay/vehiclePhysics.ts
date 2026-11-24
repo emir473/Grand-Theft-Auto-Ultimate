@@ -18,6 +18,7 @@ import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry
 import type { CharacterId, Vec3, VehicleClass, VehicleStateData } from '../core/types';
 import { clamp } from '../core/types';
 import type { InputActionState } from '../core/input';
+import type { AssetLoader } from '../assets/assetLoader';
 import type { GraphicsEngine } from '../rendering/engineGrafik';
 import type { WorldArchitecture } from '../world/worldArchitecture';
 import type { WeatherClimateSystem } from '../world/weatherSystem';
@@ -33,6 +34,7 @@ import {
   applyVehicleTuningVisuals,
   repairVehicleRuntime,
   stepDetachedDebris,
+  stepVehicleLightsAndDroplets,
   type DetachedDebrisPart,
   type VehicleRuntime,
 } from './vehicleDamage';
@@ -86,6 +88,7 @@ export class VehiclePhysicsSystem implements GameModule {
     yaw: number;
     colorHex: string;
     locked?: boolean;
+    underglowHex?: string;
     attachedTrailerId?: string | null;
     cargoWeightKg?: number;
   }): VehicleRuntime {
@@ -112,12 +115,16 @@ export class VehiclePhysicsSystem implements GameModule {
         engineLevel: 0,
         torqueLevel: 0,
         suspensionHeightOffset: 0,
-        spoilerId: 'stock',
+        spoilerId: opts.vehicleClass === 'supercar' || opts.vehicleClass === 'sports' ? 'gt_wing' : 'stock',
         primaryColorHex: opts.colorHex,
         pearlescentHex: '#ffffff',
-        metallic: 0.72,
+        metallic: 0.78,
         wheelType: 'stock',
         tireCompound: 'street',
+        underglowEnabled: Boolean(opts.underglowHex),
+        underglowHex: opts.underglowHex ?? '#00f0ff',
+        underglowMode: 'static',
+        windowTint: 0.3,
       },
       damage: { front: 0, rear: 0, left: 0, right: 0, engine: 0, detachedParts: [] },
       trunkWeapons: [],
@@ -128,25 +135,26 @@ export class VehiclePhysicsSystem implements GameModule {
     };
     this.registry.state.vehicles.set(opts.id, data);
 
-    const { root, chassis, hood, bodyMat, wheels } = buildVehicleVisualRig(
+    const loader = this.registry.hasService('assetLoader') ? this.registry.getService<AssetLoader>('assetLoader') : null;
+    const rainDropTex = loader?.getTextureBank().getSingle('rain_droplets');
+
+    const rig = buildVehicleVisualRig(
       this.scene,
       this.gfx,
       opts.id,
       opts.vehicleClass,
       profile,
-      opts.colorHex
+      opts.colorHex,
+      opts.plate,
+      rainDropTex
     );
-    root.position.set(opts.position.x, opts.position.y, opts.position.z);
-    root.rotation.y = opts.yaw;
+    rig.root.position.set(opts.position.x, opts.position.y, opts.position.z);
+    rig.root.rotation.y = opts.yaw;
 
     const runtime: VehicleRuntime = {
       data,
       profile,
-      root,
-      chassis,
-      hood,
-      bodyMat,
-      wheels,
+      ...rig,
       velocity: Vector3.Zero(),
       angularVelY: 0,
       steerAngle: 0,
@@ -157,7 +165,9 @@ export class VehiclePhysicsSystem implements GameModule {
       rollAngle: 0,
       isHydroplaning: false,
       cockpitView: false,
+      lateralSlipMps: 0,
     };
+    applyVehicleTuningVisuals(runtime);
     this.runtimes.set(opts.id, runtime);
     return runtime;
   }
@@ -345,14 +355,19 @@ export class VehiclePhysicsSystem implements GameModule {
     const fuelBurn = (Math.abs(throttleIn) * 0.015 + d.fuelLeakRate) * dt;
     d.fuelLiters = Math.max(0, d.fuelLiters - fuelBurn);
 
-    // Visual transforms
+    // Visual transforms & wheel/steering wheel motion
     rt.root.position.set(d.position.x, d.position.y, d.position.z);
     rt.root.rotation.set(rt.pitchAngle, d.yaw, rt.rollAngle);
     rt.wheelRoll += (nextForward * dt) / 0.36;
-    rt.wheels.forEach((w, idx) => {
-      w.rotation.x = rt.wheelRoll;
-      if (idx < 2) w.rotation.y = rt.steerAngle;
+    rt.lateralSlipMps = Math.abs(lateralSpeed);
+    rt.steeringWheel.rotation.z = -rt.steerAngle * 2.2;
+    rt.wheels.forEach((wNode, idx) => {
+      if (idx < 2) wNode.rotation.y = rt.steerAngle;
+      for (const ch of wNode.getChildren()) {
+        if ('rotation' in ch) (ch as { rotation: Vector3 }).rotation.x = rt.wheelRoll;
+      }
     });
+    stepVehicleLightsAndDroplets(rt, throttleIn, forwardSpeed, handbrake, wetness, this.registry.clock.renderTime);
 
     // Coupled Trailer articulation
     if (d.attachedTrailerId) {

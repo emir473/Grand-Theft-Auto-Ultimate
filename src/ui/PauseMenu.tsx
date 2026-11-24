@@ -8,9 +8,10 @@ interface PauseMenuProps {
   onResume: () => void;
   onRefresh: () => void;
   onOpenWorldMap?: () => void;
+  onOpenControls?: () => void;
 }
 
-export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefresh, onOpenWorldMap }) => {
+export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefresh, onOpenWorldMap, onOpenControls }) => {
   const s = runtime.registry.state;
   const [statusMsg, setStatusMsg] = useState('');
 
@@ -121,6 +122,15 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefre
               className="col-span-2 py-2 rounded-lg bg-amber-500/90 hover:bg-amber-400 text-neutral-950 text-xs font-bold cursor-pointer"
             >
               Open Full Leonida Map
+            </button>
+          )}
+          {onOpenControls && (
+            <button
+              type="button"
+              onClick={onOpenControls}
+              className="col-span-2 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold cursor-pointer"
+            >
+              PS5 DualSense, Touch &amp; Haptics Settings
             </button>
           )}
           <button

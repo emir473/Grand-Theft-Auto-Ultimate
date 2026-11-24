@@ -18,6 +18,8 @@ import { VehiclePhysicsSystem } from '../gameplay/vehiclePhysics';
 import { TransportSystems } from '../gameplay/transportSystems';
 import { ActivitiesMissionsSystem } from '../gameplay/activitiesMissions';
 import { NPCCrowdSystem } from '../ai/npcCrowdAI';
+import { TrafficAISystem } from '../ai/trafficAI';
+import { WildlifeAISystem } from '../ai/wildlifeAI';
 import { PoliceSystem } from '../ai/policeForensics';
 import { EconomyEncountersSystem } from '../ai/economyEncounters';
 import { SpatialAudioEngine } from '../audio/spatialAudio';
@@ -65,6 +67,9 @@ export interface HudSnapshot {
   ammoLoaded: number;
   ammoReserve: number;
   trustSynergy: number;
+  cameraMode: 'third' | 'first';
+  radioStation: string;
+  gamepadConnected: boolean;
 }
 
 export class GameRuntime {
@@ -84,6 +89,8 @@ export class GameRuntime {
   public transport!: TransportSystems;
   public activities!: ActivitiesMissionsSystem;
   public crowd!: NPCCrowdSystem;
+  public traffic!: TrafficAISystem;
+  public wildlife!: WildlifeAISystem;
   public police!: PoliceSystem;
   public economy!: EconomyEncountersSystem;
   public audio!: SpatialAudioEngine;
@@ -123,6 +130,8 @@ export class GameRuntime {
     this.transport = new TransportSystems();
     this.activities = new ActivitiesMissionsSystem();
     this.crowd = new NPCCrowdSystem();
+    this.traffic = new TrafficAISystem();
+    this.wildlife = new WildlifeAISystem();
     this.police = new PoliceSystem();
     this.economy = new EconomyEncountersSystem();
     this.audio = new SpatialAudioEngine();
@@ -138,6 +147,8 @@ export class GameRuntime {
       this.transport,
       this.activities,
       this.crowd,
+      this.traffic,
+      this.wildlife,
       this.police,
       this.economy,
       this.audio,
@@ -167,6 +178,9 @@ export class GameRuntime {
       onTogglePause: uiCallbacks.onTogglePause,
       onToggleWeaponWheel: uiCallbacks.onToggleWeaponWheel,
       onToggleDirector: uiCallbacks.onToggleDirector,
+      onToggleCamera: () => this.toggleCameraMode(),
+      onCycleRadio: () => this.audio.cycleStation(),
+      onSwitchCharacter: () => this.player.switchCharacter(),
     });
 
     if (!this.loopRegistered) {
@@ -181,7 +195,6 @@ export class GameRuntime {
           else this.transport.stepCraftInput(inputState, dt);
         } else {
           if (inputState.enterVehiclePressed && !this.registry.getActiveCharacter().inVehicleId) {
-            // Try boarding nearby aircraft/boat first if closer, else car
             const boardedCraft = this.transport.tryBoardNearestCraft();
             if (!boardedCraft) this.vehicles.stepPlayerVehicleInput(inputState, dt);
           } else {
@@ -193,7 +206,12 @@ export class GameRuntime {
         if (inputState.fireJustPressed || (inputState.fireHeld && this.weapons.getActiveInventoryItem().weaponId === 'smg_compact')) {
           if (this.weapons.fireActiveWeapon()) {
             this.audio.playShotSound();
+            this.input.gamepad.triggerHaptics(0.55, 0.35, 95, this.registry.state.hapticsEnabled, this.registry.state.hapticsIntensity);
           }
+        }
+        const activeVeh = this.vehicles.getActiveVehicleRuntime();
+        if (activeVeh && (activeVeh.lateralSlipMps > 2.8 || activeVeh.isHydroplaning)) {
+          this.input.gamepad.triggerHaptics(0.28, 0.55, 75, this.registry.state.hapticsEnabled, this.registry.state.hapticsIntensity);
         }
         if (inputState.meleePressed) {
           this.combat.triggerMeleeAttack();
@@ -282,7 +300,19 @@ export class GameRuntime {
       ammoLoaded: activeItem.loadedAmmo,
       ammoReserve: activeItem.reserveAmmo,
       trustSynergy: Math.round(s.trustSynergy),
+      cameraMode: s.cameraMode,
+      radioStation: this.audio.currentStation,
+      gamepadConnected: this.input.gamepad.isConnected,
     };
+  }
+
+  toggleCameraMode(): void {
+    const veh = this.vehicles.getActiveVehicleRuntime();
+    if (veh) {
+      this.vehicles.toggleCockpitCamera();
+    } else {
+      this.player.toggleCameraMode();
+    }
   }
 
   dispose(): void {

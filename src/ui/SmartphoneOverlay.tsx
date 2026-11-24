@@ -10,6 +10,7 @@ import {
   Radio,
   ArrowLeft,
   X,
+  Sliders,
 } from 'lucide-react';
 import type { GameRuntime } from '../core/gameRuntime';
 import { i18n } from './localization';
@@ -23,6 +24,7 @@ interface SmartphoneOverlayProps {
 const APPS: Array<{ id: PhoneAppId; labelKey: string; color: string; icon: React.ReactNode }> = [
   { id: 'taxi', labelKey: 'phone.app.taxi', color: 'bg-amber-500 text-neutral-950', icon: <CarFront className="w-5 h-5" /> },
   { id: 'mechanic', labelKey: 'phone.app.mechanic', color: 'bg-orange-500 text-neutral-950', icon: <Wrench className="w-5 h-5" /> },
+  { id: 'tuning', labelKey: 'Customs', color: 'bg-indigo-500 text-white', icon: <Sliders className="w-5 h-5" /> },
   { id: 'stocks', labelKey: 'phone.app.stocks', color: 'bg-emerald-500 text-neutral-950', icon: <TrendingUp className="w-5 h-5" /> },
   { id: 'properties', labelKey: 'phone.app.properties', color: 'bg-purple-500 text-white', icon: <Building2 className="w-5 h-5" /> },
   { id: 'hack', labelKey: 'phone.app.hack', color: 'bg-cyan-500 text-neutral-950', icon: <Cpu className="w-5 h-5" /> },

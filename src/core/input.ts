@@ -3,6 +3,8 @@
  * Respects UI input blocking and supports configurable Developer Console key.
  */
 
+import { GamepadManager, type GamepadSample } from './gamepadManager';
+
 export interface InputActionState {
   moveX: number; // -1..1
   moveY: number; // -1..1 (forward=+1)
@@ -24,9 +26,14 @@ export interface InputActionState {
   switchCharPressed: boolean;
   handbrake: boolean;
   hornPressed: boolean;
+  cameraTogglePressed: boolean;
+  radioCyclePressed: boolean;
+  gamepad: GamepadSample;
 }
 
 export class InputManager {
+  public readonly gamepad = new GamepadManager();
+
   private keysDown = new Set<string>();
   private justPressed = new Set<string>();
   private pointerDownButtons = new Set<number>();
@@ -45,6 +52,8 @@ export class InputManager {
   public touchSprint = false;
   public touchFire = false;
   public touchAim = false;
+  public touchHandbrake = false;
+  public touchThrottle = 0; // -1..1 for touch driving buttons
   public consoleKeyCode = 'Backquote';
 
   private boundTarget: HTMLElement | null = null;
@@ -53,6 +62,32 @@ export class InputManager {
   private onTogglePause?: () => void;
   private onToggleWeaponWheel?: (open: boolean) => void;
   private onToggleDirector?: () => void;
+  private onToggleCamera?: () => void;
+  private onCycleRadio?: () => void;
+  private onSwitchCharacter?: () => void;
+
+  static isTouchDevice(): boolean {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  static async toggleFullscreen(target?: HTMLElement | null): Promise<boolean> {
+    if (typeof document === 'undefined') return false;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return false;
+      }
+      const el = target ?? document.documentElement;
+      if (typeof el.requestFullscreen === 'function') {
+        await el.requestFullscreen();
+        return Boolean(document.fullscreenElement);
+      }
+    } catch {
+      // Browser/iPad policy restricted fullscreen
+    }
+    return Boolean(document.fullscreenElement);
+  }
 
   attach(
     canvas: HTMLElement,
@@ -62,6 +97,9 @@ export class InputManager {
       onTogglePause: () => void;
       onToggleWeaponWheel: (open: boolean) => void;
       onToggleDirector: () => void;
+      onToggleCamera?: () => void;
+      onCycleRadio?: () => void;
+      onSwitchCharacter?: () => void;
     }
   ): void {
     this.detach();
@@ -71,6 +109,9 @@ export class InputManager {
     this.onTogglePause = callbacks.onTogglePause;
     this.onToggleWeaponWheel = callbacks.onToggleWeaponWheel;
     this.onToggleDirector = callbacks.onToggleDirector;
+    this.onToggleCamera = callbacks.onToggleCamera;
+    this.onCycleRadio = callbacks.onCycleRadio;
+    this.onSwitchCharacter = callbacks.onSwitchCharacter;
 
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
@@ -145,6 +186,12 @@ export class InputManager {
       this.onToggleDirector?.();
       return;
     }
+    if (e.code === 'KeyV' && !e.repeat) {
+      this.onToggleCamera?.();
+    }
+    if (e.code === 'KeyN' && !e.repeat) {
+      this.onCycleRadio?.();
+    }
 
     if (!this.keysDown.has(e.code)) {
       this.justPressed.add(e.code);
@@ -196,6 +243,16 @@ export class InputManager {
   }
 
   sampleAndClearFrame(blocked: boolean): InputActionState {
+    const gp = this.gamepad.poll();
+
+    if (gp.optionsJustPressed) this.onTogglePause?.();
+    if (!blocked) {
+      if (gp.dpadUpJustPressed) this.onTogglePhone?.();
+      if (gp.dpadLeftJustPressed) this.onCycleRadio?.();
+      if (gp.touchpadJustPressed) this.onToggleCamera?.();
+      if (gp.dpadRightJustPressed) this.onSwitchCharacter?.();
+    }
+
     if (blocked) {
       this.lookAccumX = 0;
       this.lookAccumY = 0;
@@ -224,11 +281,14 @@ export class InputManager {
         switchCharPressed: false,
         handbrake: false,
         hornPressed: false,
+        cameraTogglePressed: false,
+        radioCyclePressed: false,
+        gamepad: gp,
       };
     }
 
-    let moveX = this.touchMoveX;
-    let moveY = this.touchMoveY;
+    let moveX = this.touchMoveX + gp.moveX;
+    let moveY = this.touchMoveY + this.touchThrottle + gp.moveY + (gp.throttleR2 - gp.brakeL2);
     if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) moveX -= 1;
     if (this.keysDown.has('KeyD') || this.keysDown.has('ArrowRight')) moveX += 1;
     if (this.keysDown.has('KeyW') || this.keysDown.has('ArrowUp')) moveY += 1;
@@ -240,8 +300,8 @@ export class InputManager {
       moveY /= len;
     }
 
-    const lookDeltaX = this.lookAccumX + this.touchLookDeltaX;
-    const lookDeltaY = this.lookAccumY + this.touchLookDeltaY;
+    const lookDeltaX = this.lookAccumX + this.touchLookDeltaX + gp.lookX;
+    const lookDeltaY = this.lookAccumY + this.touchLookDeltaY + gp.lookY;
     this.lookAccumX = 0;
     this.lookAccumY = 0;
     this.touchLookDeltaX = 0;
@@ -252,22 +312,25 @@ export class InputManager {
       moveY,
       lookDeltaX,
       lookDeltaY,
-      sprint: this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight') || this.touchSprint,
+      sprint: this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight') || this.touchSprint || gp.sprintL3,
       fastWalk: this.keysDown.has('AltLeft'),
-      crouchPressed: this.justPressed.has('KeyC'),
+      crouchPressed: this.justPressed.has('KeyC') || gp.circleJustPressed,
       crawlPressed: this.justPressed.has('KeyZ'),
-      jumpPressed: this.justPressed.has('Space'),
-      interactPressed: this.justPressed.has('KeyE'),
-      enterVehiclePressed: this.justPressed.has('KeyF'),
-      aimHeld: this.pointerDownButtons.has(2) || this.keysDown.has('KeyV') || this.touchAim,
-      fireHeld: this.pointerDownButtons.has(0) || this.keysDown.has('KeyJ') || this.touchFire,
-      fireJustPressed: this.pointerJustPressed.has(0) || this.justPressed.has('KeyJ'),
-      meleePressed: this.justPressed.has('KeyR'),
+      jumpPressed: this.justPressed.has('Space') || gp.crossJustPressed,
+      interactPressed: this.justPressed.has('KeyE') || gp.squareJustPressed,
+      enterVehiclePressed: this.justPressed.has('KeyF') || gp.triangleJustPressed,
+      aimHeld: this.pointerDownButtons.has(2) || this.touchAim || gp.brakeL2 > 0.35,
+      fireHeld: this.pointerDownButtons.has(0) || this.keysDown.has('KeyJ') || this.touchFire || gp.throttleR2 > 0.35,
+      fireJustPressed: this.pointerJustPressed.has(0) || this.justPressed.has('KeyJ') || gp.throttleR2 > 0.45,
+      meleePressed: this.justPressed.has('KeyR') || gp.squareJustPressed,
       coverPressed: this.justPressed.has('KeyG'),
       diveDownHeld: this.keysDown.has('ControlLeft') || this.keysDown.has('KeyX'),
       switchCharPressed: this.justPressed.has('KeyK') || this.justPressed.has('F1'),
-      handbrake: this.keysDown.has('Space'),
-      hornPressed: this.justPressed.has('KeyH'),
+      handbrake: this.keysDown.has('Space') || this.touchHandbrake || gp.handbrakeR1,
+      hornPressed: this.justPressed.has('KeyH') || gp.sprintL3,
+      cameraTogglePressed: this.justPressed.has('KeyV') || gp.touchpadJustPressed,
+      radioCyclePressed: this.justPressed.has('KeyN') || gp.dpadLeftJustPressed,
+      gamepad: gp,
     };
 
     this.justPressed.clear();

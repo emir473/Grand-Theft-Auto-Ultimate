@@ -94,7 +94,18 @@ export class PlayerController implements GameModule {
     if (!rig) return;
     rig.root.position.set(c.position.x, c.position.y, c.position.z);
     rig.root.rotation.y = c.yaw;
-    rig.root.setEnabled(c.inVehicleId === null);
+    const enabled = c.inVehicleId === null;
+    rig.root.setEnabled(enabled);
+    const isActiveFirst = enabled && id === this.registry.state.activeCharacterId && this.registry.state.cameraMode === 'first';
+    rig.head.isVisible = !isActiveFirst;
+  }
+
+  toggleCameraMode(): 'third' | 'first' {
+    const next = this.registry.state.cameraMode === 'third' ? 'first' : 'third';
+    this.registry.state.cameraMode = next;
+    this.syncRigFromState('lucia');
+    this.syncRigFromState('jason');
+    return next;
   }
 
   switchCharacter(targetId?: CharacterId): void {
@@ -288,7 +299,24 @@ export class PlayerController implements GameModule {
   }
 
   public updateCameraFollow(targetPos: Vec3, aiming: boolean, renderDt: number, vehicleOffset = 0): void {
-    if (this.registry.state.directorModeActive) return;
+    if (this.registry.state.directorModeActive || this.registry.state.photoModeActive) return;
+
+    if (vehicleOffset === 0 && this.registry.state.cameraMode === 'first') {
+      const char = this.registry.getActiveCharacter();
+      const eyeHeight = char.locomotion === 'crouch' ? 1.04 : char.locomotion === 'crawl' ? 0.52 : 1.62;
+      const moveMag = Math.hypot(this.velocities[char.id].x, this.velocities[char.id].z);
+      const bob = moveMag > 0.6 ? Math.sin(this.registry.clock.animationTime * 9.5) * 0.032 : 0;
+      const eyePos = new Vector3(targetPos.x, targetPos.y + eyeHeight + bob, targetPos.z);
+      const lookDir = new Vector3(
+        Math.sin(this.camYaw) * Math.cos(this.camPitch),
+        -Math.sin(this.camPitch) * 0.85,
+        Math.cos(this.camYaw) * Math.cos(this.camPitch)
+      );
+      this.camera.position = Vector3.Lerp(this.camera.position, eyePos, clamp(renderDt * 22, 0, 1));
+      this.camera.setTarget(this.camera.position.add(lookDir.scale(8)));
+      char.yaw = this.camYaw;
+      return;
+    }
 
     const dist = vehicleOffset > 0 ? vehicleOffset : aiming ? 2.4 : this.camDistance;
     const height = vehicleOffset > 0 ? 2.2 : aiming ? 1.55 : 1.75;

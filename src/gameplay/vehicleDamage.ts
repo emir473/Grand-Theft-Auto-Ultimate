@@ -10,8 +10,17 @@ export interface VehicleRuntime {
   root: TransformNode;
   chassis: Mesh;
   hood: Mesh;
+  steeringWheel: Mesh;
+  spoiler: Mesh;
   bodyMat: PBRMaterial;
-  wheels: Mesh[];
+  glassMat: PBRMaterial;
+  rimMat: PBRMaterial;
+  brakeLightMat: PBRMaterial;
+  reverseLightMat: PBRMaterial;
+  headLightMat: PBRMaterial;
+  underglowMat: PBRMaterial;
+  underglowPlane: Mesh;
+  wheels: TransformNode[];
   velocity: Vector3;
   angularVelY: number;
   steerAngle: number;
@@ -22,6 +31,7 @@ export interface VehicleRuntime {
   rollAngle: number;
   isHydroplaning: boolean;
   cockpitView: boolean;
+  lateralSlipMps: number;
 }
 
 export interface DetachedDebrisPart {
@@ -31,8 +41,65 @@ export interface DetachedDebrisPart {
 }
 
 export function applyVehicleTuningVisuals(rt: VehicleRuntime): void {
-  rt.bodyMat.albedoColor = Color3.FromHexString(rt.data.tuning.primaryColorHex);
-  rt.bodyMat.metallic = rt.data.tuning.metallic;
+  const t = rt.data.tuning;
+  rt.bodyMat.albedoColor = Color3.FromHexString(t.primaryColorHex);
+  rt.bodyMat.metallic = t.metallic;
+  rt.bodyMat.clearCoat.tintColor = Color3.FromHexString(t.pearlescentHex || '#ffffff');
+  rt.spoiler.isVisible = t.spoilerId !== 'none';
+  rt.glassMat.alpha = clamp(0.95 - (t.windowTint ?? 0.25) * 0.45, 0.35, 0.92);
+
+  if (t.wheelType === 'chrome') {
+    rt.rimMat.albedoColor = new Color3(0.92, 0.94, 0.98);
+    rt.rimMat.metallic = 0.98;
+  } else if (t.wheelType === 'sport') {
+    rt.rimMat.albedoColor = new Color3(0.18, 0.2, 0.24);
+    rt.rimMat.metallic = 0.85;
+  } else if (t.wheelType === 'offroad') {
+    rt.rimMat.albedoColor = new Color3(0.45, 0.42, 0.36);
+    rt.rimMat.metallic = 0.55;
+  }
+
+  rt.underglowPlane.isVisible = Boolean(t.underglowEnabled);
+  if (t.underglowEnabled) {
+    const col = Color3.FromHexString(t.underglowHex || '#00f0ff');
+    rt.underglowMat.albedoColor = col;
+    rt.underglowMat.emissiveColor = col;
+  }
+}
+
+export function stepVehicleLightsAndDroplets(
+  rt: VehicleRuntime,
+  throttleIn: number,
+  forwardSpeed: number,
+  handbrake: boolean,
+  wetness: number,
+  elapsedSec: number
+): void {
+  const braking = handbrake || (forwardSpeed > 1.2 && throttleIn < -0.1) || (Math.abs(forwardSpeed) < 0.8 && throttleIn === 0);
+  const reversing = forwardSpeed < -0.5 || (forwardSpeed <= 0.4 && throttleIn < -0.1);
+  rt.brakeLightMat.emissiveColor = braking ? new Color3(1.0, 0.08, 0.08) : new Color3(0.28, 0.02, 0.02);
+  rt.reverseLightMat.emissiveColor = reversing ? new Color3(0.95, 0.98, 1.0) : new Color3(0, 0, 0);
+
+  // Clear-coat rain droplets visibility & sheen response
+  if (rt.bodyMat.clearCoat.bumpTexture) {
+    rt.bodyMat.clearCoat.bumpTexture.level = wetness > 0.2 ? clamp(wetness * 0.65, 0.08, 0.7) : 0.0;
+  }
+  rt.bodyMat.clearCoat.roughness = wetness > 0.2 ? 0.03 : 0.06;
+
+  // Dynamic RGB neon underglow modes
+  if (rt.data.tuning.underglowEnabled) {
+    const mode = rt.data.tuning.underglowMode ?? 'static';
+    if (mode === 'rainbow') {
+      const r = 0.5 + 0.5 * Math.sin(elapsedSec * 2.4);
+      const g = 0.5 + 0.5 * Math.sin(elapsedSec * 2.4 + 2.09);
+      const b = 0.5 + 0.5 * Math.sin(elapsedSec * 2.4 + 4.18);
+      rt.underglowMat.emissiveColor = new Color3(r, g, b);
+    } else if (mode === 'pulse') {
+      const base = Color3.FromHexString(rt.data.tuning.underglowHex || '#00f0ff');
+      const pulse = 0.45 + 0.55 * Math.sin(elapsedSec * 4.2);
+      rt.underglowMat.emissiveColor = base.scale(pulse);
+    }
+  }
 }
 
 export function repairVehicleRuntime(rt: VehicleRuntime, registry: GameRegistry, costCents = 0): void {

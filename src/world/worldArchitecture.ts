@@ -32,6 +32,7 @@ import {
   type DistrictMatMap,
 } from './districtBuilders';
 import { FoliageAndTrafficLights } from './foliageAndProps';
+import { buildRoadSignageAndCrosswalks } from './roadMarkings';
 
 export interface WorldChunk {
   id: string;
@@ -222,6 +223,7 @@ export class WorldArchitecture implements GameModule {
       seg.receiveShadows = true;
       seg.parent = roadRoot;
     }
+    buildRoadSignageAndCrosswalks(this.scene, roadRoot);
   }
 
   getTerrainHeight(x: number, z: number): number {

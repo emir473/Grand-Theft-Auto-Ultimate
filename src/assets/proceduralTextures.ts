@@ -169,6 +169,42 @@ export class ProceduralTextureBank {
     return tex;
   }
 
+  createRainDropletNormalMap(key = 'rain_droplets', size = 256): DynamicTexture {
+    const existing = this.singles.get(key);
+    if (existing) return existing;
+    const height = new Float32Array(size * size);
+    const drops: Array<{ cx: number; cy: number; r: number }> = [];
+    for (let i = 0; i < 64; i++) {
+      drops.push({
+        cx: hash2d(i, 1, 77) * size,
+        cy: hash2d(i, 2, 77) * size,
+        r: 4 + hash2d(i, 3, 77) * 9,
+      });
+    }
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        let h = 0.05;
+        for (const d of drops) {
+          const dx = x - d.cx;
+          const dy = y - d.cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist < d.r) {
+            const norm = 1 - (dist / d.r) * (dist / d.r);
+            h = Math.max(h, 0.15 + Math.sqrt(Math.max(0, norm)) * 0.85);
+          }
+        }
+        height[y * size + x] = h;
+      }
+    }
+    const tex = this.buildNormalFromHeight(key, height, size, 4.2);
+    this.singles.set(key, tex);
+    return tex;
+  }
+
+  getSingle(key: string): DynamicTexture | undefined {
+    return this.singles.get(key);
+  }
+
   getSet(key: string): PBRTextureSet | undefined {
     return this.sets.get(key);
   }

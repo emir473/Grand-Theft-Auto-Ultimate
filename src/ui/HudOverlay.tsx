@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, ShieldAlert, Pause, Terminal, Disc, Users, Video, Volume2, VolumeX, Map as MapIcon } from 'lucide-react';
+import { Phone, ShieldAlert, Pause, Terminal, Disc, Users, Video, Volume2, VolumeX, Map as MapIcon, Camera, Eye, Gamepad2, Maximize2, Radio } from 'lucide-react';
 import type { GameRuntime, HudSnapshot } from '../core/gameRuntime';
 import { formatMoney } from '../core/types';
 import { i18n } from './localization';
@@ -16,6 +16,11 @@ interface HudOverlayProps {
   onOpenWeaponWheel: () => void;
   onOpenPause: () => void;
   onOpenConsole: () => void;
+  onOpenControls: () => void;
+  onOpenPhotoMode: () => void;
+  onToggleFullscreen: () => void;
+  onToggleCameraMode: () => void;
+  onCycleRadio: () => void;
   onSwitchCharacter: () => void;
   onToggleDirector: () => void;
   onToggleMute: () => void;
@@ -33,6 +38,11 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   onOpenWeaponWheel,
   onOpenPause,
   onOpenConsole,
+  onOpenControls,
+  onOpenPhotoMode,
+  onToggleFullscreen,
+  onToggleCameraMode,
+  onCycleRadio,
   onSwitchCharacter,
   onToggleDirector,
   onToggleMute,
@@ -95,7 +105,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 pointer-events-auto">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 pointer-events-auto">
             <button
               type="button"
               onClick={onSwitchCharacter}
@@ -104,6 +114,15 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             >
               <Users className="w-3.5 h-3.5 text-amber-400" />
               <span>Switch (K)</span>
+            </button>
+            <button
+              type="button"
+              onClick={onToggleCameraMode}
+              title="Toggle 1st / 3rd Person & Cockpit (V)"
+              className="px-2 py-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-xs font-medium text-neutral-100 flex items-center gap-1 whitespace-nowrap cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5 text-sky-400" />
+              <span>{hud.cameraMode === 'first' ? '1P' : '3P'}</span>
             </button>
             <button
               type="button"
@@ -134,11 +153,44 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             </button>
             <button
               type="button"
+              onClick={onCycleRadio}
+              title={`Radio: ${hud.radioStation} (N)`}
+              className="px-2 py-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-xs font-medium text-pink-300 flex items-center gap-1 whitespace-nowrap cursor-pointer"
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{hud.radioStation.split(' ')[0]}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenPhotoMode}
+              title="Photo Studio Mode"
+              className="p-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-amber-300 cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenControls}
+              title="DualSense Controller & Touch Guide"
+              className={`p-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 cursor-pointer ${hud.gamepadConnected ? 'text-emerald-400' : 'text-neutral-200'}`}
+            >
+              <Gamepad2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
               onClick={onToggleDirector}
               title="Director Replay Camera (F3)"
               className="p-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-neutral-200 cursor-pointer"
             >
               <Video className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              title="Toggle Fullscreen"
+              className="p-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-neutral-200 cursor-pointer"
+            >
+              <Maximize2 className="w-4 h-4" />
             </button>
             <button
               type="button"
