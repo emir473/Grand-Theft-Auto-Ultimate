@@ -95,6 +95,55 @@ export const WeaponWheelOverlay: React.FC<WeaponWheelOverlayProps> = ({ runtime,
             </div>
           </div>
         )}
+
+        {/* Utility Gear & Quick Tools */}
+        <div className="mt-4 pt-3 border-t border-white/10">
+          <div className="text-xs font-semibold text-neutral-300 mb-2">Utility Gear & Field Kit</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                runtime.toggleCameraMode();
+                onClose();
+              }}
+              className="px-3 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-xs text-sky-300 cursor-pointer"
+            >
+              Toggle 1P / 3P View
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                runtime.audio.cycleStation();
+              }}
+              className="px-3 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-xs text-pink-300 cursor-pointer"
+            >
+              Radio: {runtime.audio.currentStation}
+            </button>
+            {nearestVeh && (
+              <button
+                type="button"
+                onClick={() => {
+                  runtime.vehicles.repairVehicle(nearestVeh.data.id);
+                  onClose();
+                }}
+                className="px-3 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-xs text-emerald-300 cursor-pointer"
+              >
+                Field Wrench ({nearestVeh.data.name})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                char.oxygenCurrent = char.maxOxygen;
+                char.staminaCurrent = 100;
+                onClose();
+              }}
+              className="px-3 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-xs text-cyan-300 cursor-pointer"
+            >
+              Rebreather / Energy Kit
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

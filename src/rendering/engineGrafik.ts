@@ -256,25 +256,20 @@ export class GraphicsEngine implements GameModule {
     pipe.imageProcessingEnabled = true;
     pipe.imageProcessing.toneMappingEnabled = true;
     pipe.imageProcessing.toneMappingType = ImageProcessingConfiguration.TONEMAPPING_ACES;
-    pipe.imageProcessing.exposure = 1.05;
-    pipe.imageProcessing.contrast = 1.08;
-    pipe.imageProcessing.vignetteEnabled = true;
-    pipe.imageProcessing.vignetteWeight = 1.1;
+    pipe.imageProcessing.exposure = 1.08;
+    pipe.imageProcessing.contrast = 1.1;
+    pipe.imageProcessing.vignetteEnabled = false;
 
     pipe.bloomEnabled = profile !== 'low';
-    pipe.bloomThreshold = 0.78;
-    pipe.bloomWeight = profile === 'ultra' ? 0.34 : 0.24;
-    pipe.bloomKernel = 48;
+    pipe.bloomThreshold = 0.84;
+    pipe.bloomWeight = profile === 'ultra' ? 0.22 : 0.16;
+    pipe.bloomKernel = 40;
 
-    pipe.chromaticAberrationEnabled = profile === 'high' || profile === 'ultra';
-    pipe.chromaticAberration.aberrationAmount = 4.5;
+    // Crystal-clear photorealism: disable artificial optical blur/aberration
+    pipe.chromaticAberrationEnabled = false;
+    pipe.depthOfFieldEnabled = false;
 
-    pipe.depthOfFieldEnabled = profile === 'ultra';
-    if (pipe.depthOfFieldEnabled) {
-      pipe.depthOfField.focalLength = 50;
-      pipe.depthOfField.fStop = 2.8;
-      pipe.depthOfField.focusDistance = 14000;
-    }
+    this.scene.environmentIntensity = 0.85;
 
     this.pipeline = pipe;
   }

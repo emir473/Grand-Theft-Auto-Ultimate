@@ -83,6 +83,12 @@ export class PlayerController implements GameModule {
     this.camera.maxZ = 2800;
     this.camera.fov = 0.92;
     this.scene.activeCamera = this.camera;
+
+    this.rigs.lucia.fpArms.parent = this.camera;
+    this.rigs.jason.fpArms.parent = this.camera;
+    this.syncRigFromState('lucia');
+    this.syncRigFromState('jason');
+
     this.gfx.setupPostProcessingAndShadows();
 
     this.readiness = 'initialized';
@@ -92,12 +98,31 @@ export class PlayerController implements GameModule {
     const c = this.registry.state.characters[id];
     const rig = this.rigs[id];
     if (!rig) return;
-    rig.root.position.set(c.position.x, c.position.y, c.position.z);
-    rig.root.rotation.y = c.yaw;
-    const enabled = c.inVehicleId === null;
+    const isConvertibleDriver = c.inVehicleId !== null && c.inVehicleId.includes('buccaneer');
+    if (isConvertibleDriver && c.inVehicleId) {
+      const veh = this.registry.state.vehicles.get(c.inVehicleId);
+      if (veh) {
+        const rightOffset = -0.36;
+        const fwdOffset = -0.08;
+        const cosY = Math.cos(veh.yaw);
+        const sinY = Math.sin(veh.yaw);
+        rig.root.position.set(
+          veh.position.x + cosY * rightOffset + sinY * fwdOffset,
+          veh.position.y + 0.08,
+          veh.position.z - sinY * rightOffset + cosY * fwdOffset
+        );
+        rig.root.rotation.y = veh.yaw;
+      }
+    } else {
+      rig.root.position.set(c.position.x, c.position.y, c.position.z);
+      rig.root.rotation.y = c.yaw;
+    }
+    const enabled = c.inVehicleId === null || isConvertibleDriver;
     rig.root.setEnabled(enabled);
-    const isActiveFirst = enabled && id === this.registry.state.activeCharacterId && this.registry.state.cameraMode === 'first';
+    const isActive = id === this.registry.state.activeCharacterId;
+    const isActiveFirst = c.inVehicleId === null && isActive && this.registry.state.cameraMode === 'first';
     rig.head.isVisible = !isActiveFirst;
+    rig.fpArms.setEnabled(isActiveFirst);
   }
 
   toggleCameraMode(): 'third' | 'first' {

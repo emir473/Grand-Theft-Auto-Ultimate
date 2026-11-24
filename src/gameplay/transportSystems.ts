@@ -5,7 +5,7 @@
  * Public Transit (City Bus & Vice Metro Subway), and Military Restricted Zones (Fort Zancudo / Port Gellhorn).
  */
 
-import { Color3, MeshBuilder, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
+import { Color3, Scene, TransformNode } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { Vec3 } from '../core/types';
 import { clamp } from '../core/types';
@@ -21,6 +21,7 @@ import {
   type AircraftUnit,
   type MarineUnit,
 } from './aviationMarine';
+import { buildSculptedBoatRig, buildSculptedTransitRig } from './marineSculptor';
 
 export type { AircraftPhase, AircraftUnit, MarineUnit };
 
@@ -74,7 +75,7 @@ export class TransportSystems implements GameModule {
   }
 
   private spawnAircraft(): void {
-    const airlinerRoot = createAircraftMesh(this.scene, this.gfx, 'vca_101', new Color3(0.94, 0.96, 0.98), 16, 4.2);
+    const airlinerRig = createAircraftMesh(this.scene, this.gfx, 'vca_101', new Color3(0.94, 0.96, 0.98), 16, 4.2, 'airliner');
     this.aircraft.push({
       id: 'ac_vca_101',
       callsign: 'VCA-101',
@@ -87,10 +88,11 @@ export class TransportSystems implements GameModule {
       bank: 0,
       speedMps: 0,
       pilotedByPlayer: false,
-      root: airlinerRoot,
+      root: airlinerRig.root,
+      gearNode: airlinerRig.gearNode,
     });
 
-    const heliRoot = createAircraftMesh(this.scene, this.gfx, 'villa_heli', new Color3(0.15, 0.18, 0.24), 5.2, 2.2);
+    const heliRig = createAircraftMesh(this.scene, this.gfx, 'villa_heli', new Color3(0.15, 0.18, 0.24), 5.8, 2.2, 'helicopter');
     this.aircraft.push({
       id: 'ac_villa_heli',
       callsign: 'STAR-H1',
@@ -103,7 +105,9 @@ export class TransportSystems implements GameModule {
       bank: 0,
       speedMps: 0,
       pilotedByPlayer: false,
-      root: heliRoot,
+      root: heliRig.root,
+      rotorNode: heliRig.rotorNode,
+      tailRotorNode: heliRig.tailRotorNode,
     });
   }
 
@@ -116,14 +120,7 @@ export class TransportSystems implements GameModule {
     ];
 
     for (const s of specs) {
-      const root = new TransformNode(`marine_${s.id}`, this.scene);
-      const mat = new PBRMaterial(`marineMat_${s.id}`, this.scene);
-      mat.albedoColor = s.color;
-      mat.roughness = 0.32;
-      const hull = MeshBuilder.CreateBox(`${s.id}_hull`, { width: s.wid, height: 1.4, depth: s.len }, this.scene);
-      hull.position.y = 0.4;
-      hull.material = mat;
-      hull.parent = root;
+      const root = buildSculptedBoatRig(this.scene, this.gfx, s.id, s.kind, s.color, s.wid, s.len);
       this.marine.push({
         id: s.id,
         name: s.name,
@@ -142,16 +139,7 @@ export class TransportSystems implements GameModule {
   private spawnTransitFleet(): void {
     const railNodes = this.world.roadNetwork.getRailStations();
     if (railNodes.length >= 2) {
-      const subRoot = new TransformNode('viceMetroTrain', this.scene);
-      const subMat = new PBRMaterial('viceMetroMat', this.scene);
-      subMat.albedoColor = new Color3(0.1, 0.72, 0.82);
-      subMat.metallic = 0.65;
-      subMat.roughness = 0.25;
-      const car = MeshBuilder.CreateBox('metroCar_1', { width: 2.8, height: 3.1, depth: 15 }, this.scene);
-      car.position.y = 1.6;
-      car.material = subMat;
-      car.parent = subRoot;
-
+      const subRoot = buildSculptedTransitRig(this.scene, this.gfx, 'subway');
       this.transit.push({
         id: 'transit_metro_1',
         kind: 'subway',
@@ -168,15 +156,7 @@ export class TransportSystems implements GameModule {
     const busNodes = ['ocean_south', 'ocean_mid', 'ocean_club', 'dt_bank', 'dt_hospital', 'vcia_terminal'];
     const busStart = this.world.roadNetwork.nodes.get(busNodes[0]);
     if (busStart) {
-      const busRoot = new TransformNode('viceCityBus', this.scene);
-      const busMat = new PBRMaterial('busMat', this.scene);
-      busMat.albedoColor = new Color3(0.95, 0.65, 0.14);
-      busMat.roughness = 0.38;
-      const body = MeshBuilder.CreateBox('cityBusBody', { width: 2.5, height: 2.8, depth: 9.8 }, this.scene);
-      body.position.y = 1.6;
-      body.material = busMat;
-      body.parent = busRoot;
-
+      const busRoot = buildSculptedTransitRig(this.scene, this.gfx, 'bus');
       this.transit.push({
         id: 'transit_bus_1',
         kind: 'bus',
@@ -240,6 +220,15 @@ export class TransportSystems implements GameModule {
         return true;
       }
     }
+
+    for (const tr of this.transit) {
+      if (Math.hypot(tr.position.x - char.position.x, tr.position.z - char.position.z) < 8) {
+        this.activeCraftId = tr.id;
+        char.inVehicleId = tr.id;
+        this.player.syncRigFromState(char.id);
+        return true;
+      }
+    }
     return false;
   }
 
@@ -281,6 +270,13 @@ export class TransportSystems implements GameModule {
       boat.position.z += Math.cos(boat.yaw) * boat.speedMps * simDt;
       char.position = { ...boat.position };
       this.player.updateCameraFollow(boat.position, false, simDt, 9.5);
+      return;
+    }
+
+    const tr = this.transit.find((t) => t.id === this.activeCraftId);
+    if (tr) {
+      char.position = { x: tr.position.x, y: tr.position.y + 0.8, z: tr.position.z };
+      this.player.updateCameraFollow(tr.position, false, simDt, 11.5);
     }
   }
 
@@ -296,12 +292,23 @@ export class TransportSystems implements GameModule {
       this.triggerAirportFlightCycle();
     }
 
-    // 2. Aircraft phase state machine
+    // 2. Aircraft phase state machine + helicopter rotors + gear retraction
     for (const ac of this.aircraft) {
       if (!ac.pilotedByPlayer && ac.kind === 'airliner') {
         stepAirlinerFlightPhase(ac, simDt, () => {
           this.runwayOccupied = false;
         });
+      }
+      if (ac.rotorNode) {
+        const spinRate = ac.pilotedByPlayer || ac.position.y > 2.2 ? 22 : 3.5;
+        ac.rotorNode.rotation.y += spinRate * simDt;
+      }
+      if (ac.tailRotorNode) {
+        const spinRate = ac.pilotedByPlayer || ac.position.y > 2.2 ? 30 : 4.5;
+        ac.tailRotorNode.rotation.x += spinRate * simDt;
+      }
+      if (ac.gearNode) {
+        ac.gearNode.setEnabled(ac.position.y < 6.0);
       }
       ac.root.position.set(ac.position.x, ac.position.y, ac.position.z);
       ac.root.rotation.set(ac.pitch, ac.yaw, ac.bank);

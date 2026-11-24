@@ -88,10 +88,13 @@ test('RoadNetwork A* finds valid route and respects road closures', () => {
 
 test('SaveManager serializes valid state & SpatialAudio Doppler math', () => {
   const reg = new GameRegistry();
+  reg.state.cameraMode = 'first';
+  reg.state.hapticsIntensity = 0.72;
   const sm = new SaveManager(reg);
   const snap = sm.serializeState();
   assert(snap.activeCharacterId === 'lucia', 'Starter character must be Lucia');
   assert(snap.characters.lucia.position.z === -6, 'Starter point must be Star Island Villa courtyard');
+  assert(snap.cameraMode === 'first' && snap.hapticsIntensity === 0.72, 'Round 3-4 settings must serialize');
   const doppler = SpatialAudioEngine.computeDopplerFactor(34.3);
   assert(doppler > 1.1 && doppler < 1.12, 'Approaching Doppler factor must be ~1.111');
 });

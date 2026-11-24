@@ -5,7 +5,7 @@
  * and A* drivable Downtown Cab Co. rideshare.
  */
 
-import { Color3, MeshBuilder, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
+import { Color3, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { SimulationTier, Vec3 } from '../core/types';
 import { CENTRAL_LIMITS } from '../core/types';
@@ -15,6 +15,7 @@ import type { CombatAnimationSystem } from '../gameplay/combatAnimation';
 import type { WeaponsInventorySystem } from '../gameplay/weaponsInventory';
 import { SpatialGrid } from '../world/spatialGrid';
 import { DowntownCabSystem, type TaxiRideState } from './taxiSystem';
+import { buildArticulatedNpcRig, type NpcVisualRig } from './npcModels';
 
 export type { TaxiRideState };
 
@@ -48,6 +49,7 @@ export interface NPCEntity {
   stateTimer: number;
   witnessCoolDown: number;
   mesh?: TransformNode;
+  rig?: NpcVisualRig;
 }
 
 export class NPCCrowdSystem implements GameModule {
@@ -105,8 +107,10 @@ export class NPCCrowdSystem implements GameModule {
   }
 
   private spawnInitialCrowd(): void {
-    const hubs: Array<{ x: number; z: number; role: NPCEntity['role'] }> = [
+    const hubs: Array<{ x: number; z: number; role: NPCEntity['role']; beach?: boolean }> = [
       { x: 172, z: -30, role: 'pedestrian' },
+      { x: 224, z: -12, role: 'pedestrian', beach: true },
+      { x: 226, z: 36, role: 'pedestrian', beach: true },
       { x: 174, z: 20, role: 'pedestrian' },
       { x: 176, z: 90, role: 'passenger' },
       { x: -138, z: -25, role: 'pedestrian' },
@@ -121,21 +125,19 @@ export class NPCCrowdSystem implements GameModule {
       for (let k = 0; k < 3; k++) {
         if (this.npcs.length >= CENTRAL_LIMITS.maxNpcsNear) break;
         const id = `npc_${idx++}`;
+        const px = hub.x + (Math.random() - 0.5) * 14;
+        const pz = hub.z + (Math.random() - 0.5) * 14;
         const pos: Vec3 = {
-          x: hub.x + (Math.random() - 0.5) * 14,
-          y: this.world.getTerrainHeight(hub.x, hub.z),
-          z: hub.z + (Math.random() - 0.5) * 14,
+          x: px,
+          y: this.world.getTerrainHeight(px, pz),
+          z: pz,
         };
-        const root = new TransformNode(`npcRoot_${id}`, this.scene);
-        const body = MeshBuilder.CreateCapsule(`npcBody_${id}`, { radius: 0.28, height: 1.72 }, this.scene);
-        body.position.y = 0.86;
-        body.material = this.npcMat;
-        body.parent = root;
-        root.position.set(pos.x, pos.y, pos.z);
+        const rig = buildArticulatedNpcRig(this.scene, id, idx, Boolean(hub.beach));
+        rig.root.position.set(pos.x, pos.y, pos.z);
 
         const npc: NPCEntity = {
           id,
-          name: `Citizen #${idx}`,
+          name: hub.beach ? `Beachgoer #${idx}` : `Citizen #${idx}`,
           role: hub.role,
           state: 'Wander',
           tier: 'near',
@@ -145,7 +147,8 @@ export class NPCCrowdSystem implements GameModule {
           health: 100,
           stateTimer: 4 + Math.random() * 5,
           witnessCoolDown: 0,
-          mesh: root,
+          mesh: rig.root,
+          rig,
         };
         this.npcs.push(npc);
         this.world.spatialGrid.insert(id, 'npc', pos, npc);
@@ -284,24 +287,35 @@ export class NPCCrowdSystem implements GameModule {
         }
       }
 
+      let walkingSpeed = 0;
       if (npc.state === 'Wander' || npc.state === 'Flee' || npc.state === 'WeatherReaction') {
         const dx = npc.target.x - npc.position.x;
         const dz = npc.target.z - npc.position.z;
         const d = Math.hypot(dx, dz);
         if (d > 0.6) {
-          const spd = npc.state === 'Flee' ? 4.8 : npc.state === 'WeatherReaction' ? 3.2 : 1.5;
+          walkingSpeed = npc.state === 'Flee' ? 4.8 : npc.state === 'WeatherReaction' ? 3.2 : 1.5;
           npc.yaw = Math.atan2(dx, dz);
-          npc.position.x += (dx / d) * spd * simDt;
-          npc.position.z += (dz / d) * spd * simDt;
+          npc.position.x += (dx / d) * walkingSpeed * simDt;
+          npc.position.z += (dz / d) * walkingSpeed * simDt;
           npc.position.y = this.world.getTerrainHeight(npc.position.x, npc.position.z);
           this.world.spatialGrid.updatePosition(npc.id, npc.position);
         }
       }
 
       if (npc.mesh) {
-        npc.mesh.setEnabled(npc.tier !== 'far');
+        const show = npc.tier !== 'far';
+        npc.mesh.setEnabled(show);
         npc.mesh.position.set(npc.position.x, npc.position.y, npc.position.z);
         npc.mesh.rotation.y = npc.yaw;
+        if (show && npc.rig) {
+          const swing = walkingSpeed > 0.1
+            ? Math.sin(this.registry.clock.animationTime * (walkingSpeed > 3 ? 11 : 6.2) + npc.rig.phaseOffset) * 0.48
+            : 0;
+          npc.rig.leftLeg.rotation.x = swing;
+          npc.rig.rightLeg.rotation.x = -swing;
+          npc.rig.leftArm.rotation.x = -swing * 0.8;
+          npc.rig.rightArm.rotation.x = swing * 0.8;
+        }
       }
     }
 

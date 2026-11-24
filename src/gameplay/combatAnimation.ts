@@ -173,47 +173,102 @@ export class CombatAnimationSystem implements GameModule {
     const char = this.registry.getActiveCharacter();
     const t = this.registry.clock.animationTime;
 
-    // 1. Update procedural blend tree for both character rigs
+    // 1. Update articulated procedural blend tree for both character rigs
     for (const cid of ['lucia', 'jason'] as const) {
       const cState = this.registry.state.characters[cid];
       const rig = this.player.rigs[cid];
-      if (!rig || cState.inVehicleId !== null) continue;
+      if (!rig) continue;
+
+      if (cState.inVehicleId !== null) {
+        // Seated convertible / open-cockpit driving posture
+        rig.torso.position.y = 1.02;
+        rig.torso.rotation.x = 0.08;
+        rig.head.position.y = 1.44;
+        rig.leftLegNodes.hipPivot.position.y = 0.72;
+        rig.rightLegNodes.hipPivot.position.y = 0.72;
+        rig.leftLegNodes.hipPivot.rotation.x = -1.25;
+        rig.rightLegNodes.hipPivot.rotation.x = -1.25;
+        rig.leftLegNodes.kneePivot.rotation.x = 1.15;
+        rig.rightLegNodes.kneePivot.rotation.x = 1.15;
+        rig.leftArmNodes.shoulderPivot.position.y = 1.22;
+        rig.rightArmNodes.shoulderPivot.position.y = 1.22;
+        rig.leftArmNodes.shoulderPivot.rotation.x = -0.95;
+        rig.rightArmNodes.shoulderPivot.rotation.x = -0.95;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.45;
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.45;
+        continue;
+      }
 
       const loco = cid === char.id && this.meleePhase !== 'none' ? 'melee' : cState.locomotion;
       const isMoving = loco === 'walk' || loco === 'fast_walk' || loco === 'run' || loco === 'sprint' || loco === 'swim';
       const freq = loco === 'sprint' ? 12 : loco === 'run' ? 9 : 6;
-      const amp = loco === 'sprint' ? 0.65 : isMoving ? 0.42 : 0.04;
+      const amp = loco === 'sprint' ? 0.65 : isMoving ? 0.42 : 0.03;
       const swing = Math.sin(t * freq) * amp;
 
-      // Crouch / crawl torso posture
+      rig.leftLegNodes.hipPivot.position.y = 0.88;
+      rig.rightLegNodes.hipPivot.position.y = 0.88;
+      rig.leftArmNodes.shoulderPivot.position.y = 1.44;
+      rig.rightArmNodes.shoulderPivot.position.y = 1.44;
+
       if (loco === 'crouch' || (cid === char.id && this.inCover)) {
-        rig.torso.position.y = 0.85;
-        rig.head.position.y = 1.32;
+        rig.torso.position.y = 0.94;
+        rig.torso.rotation.x = 0.16;
+        rig.head.position.y = 1.36;
+        rig.leftLegNodes.hipPivot.rotation.x = -0.68 + swing * 0.45;
+        rig.rightLegNodes.hipPivot.rotation.x = -0.68 - swing * 0.45;
+        rig.leftLegNodes.kneePivot.rotation.x = 0.92;
+        rig.rightLegNodes.kneePivot.rotation.x = 0.92;
       } else if (loco === 'crawl') {
-        rig.torso.position.y = 0.42;
+        rig.torso.position.y = 0.44;
         rig.torso.rotation.x = Math.PI * 0.42;
-        rig.head.position.y = 0.52;
+        rig.head.position.y = 0.56;
+        rig.leftLegNodes.hipPivot.rotation.x = 1.2 + swing * 0.3;
+        rig.rightLegNodes.hipPivot.rotation.x = 1.2 - swing * 0.3;
+        rig.leftLegNodes.kneePivot.rotation.x = 0.25;
+        rig.rightLegNodes.kneePivot.rotation.x = 0.25;
+      } else if (loco === 'swim' || loco === 'dive') {
+        rig.torso.position.y = 1.1;
+        rig.torso.rotation.x = Math.PI * 0.42;
+        rig.head.position.y = 1.42;
+        rig.leftLegNodes.hipPivot.rotation.x = 1.1 + Math.sin(t * 9) * 0.32;
+        rig.rightLegNodes.hipPivot.rotation.x = 1.1 - Math.sin(t * 9) * 0.32;
+        rig.leftLegNodes.kneePivot.rotation.x = 0.18;
+        rig.rightLegNodes.kneePivot.rotation.x = 0.18;
       } else {
-        rig.torso.position.y = 1.15;
-        rig.torso.rotation.x = 0;
+        rig.torso.position.y = 1.24 + (isMoving ? Math.abs(Math.sin(t * freq)) * 0.03 : 0);
+        rig.torso.rotation.x = loco === 'sprint' ? 0.14 : 0.03;
         rig.head.position.y = 1.66;
+        rig.leftLegNodes.hipPivot.rotation.x = swing;
+        rig.rightLegNodes.hipPivot.rotation.x = -swing;
+        rig.leftLegNodes.kneePivot.rotation.x = Math.max(0.06, -swing * 0.72);
+        rig.rightLegNodes.kneePivot.rotation.x = Math.max(0.06, swing * 0.72);
       }
 
-      rig.leftLeg.rotation.x = swing;
-      rig.rightLeg.rotation.x = -swing;
-
       if (loco === 'aim' || loco === 'shoot') {
-        rig.rightArm.rotation.x = -Math.PI * 0.48;
-        rig.leftArm.rotation.x = -Math.PI * 0.35;
+        rig.rightArm.rotation.x = -Math.PI * 0.46;
+        rig.leftArm.rotation.x = -Math.PI * 0.36;
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.15;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.35;
       } else if (loco === 'melee') {
         rig.rightArm.rotation.x = -Math.PI * 0.72 * Math.sin(t * 16);
-        rig.leftArm.rotation.x = 0.25;
+        rig.leftArm.rotation.x = -0.35;
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.45;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.5;
+      } else if (loco === 'swim' || loco === 'dive') {
+        rig.leftArm.rotation.x = -1.6 + Math.cos(t * 6) * 0.9;
+        rig.rightArm.rotation.x = -1.6 - Math.cos(t * 6) * 0.9;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.35;
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.35;
       } else if (cid === char.id && this.carriedEntityId) {
         rig.leftArm.rotation.x = -Math.PI * 0.4;
         rig.rightArm.rotation.x = -Math.PI * 0.4;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.5;
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.5;
       } else {
         rig.leftArm.rotation.x = -swing * 0.85;
         rig.rightArm.rotation.x = swing * 0.85;
+        rig.leftArmNodes.elbowPivot.rotation.x = -0.22 - Math.max(0, swing * 0.45);
+        rig.rightArmNodes.elbowPivot.rotation.x = -0.22 - Math.max(0, -swing * 0.45);
       }
     }
 

@@ -72,6 +72,13 @@ export class ActivitiesMissionsSystem implements GameModule {
     if (!m || m.status === 'completed') return false;
     m.status = 'active';
     m.stageIndex = 1;
+    if (m.id === 'mission_vice_welcome') {
+      m.targetPosition = { x: 175, y: 1, z: -20 };
+      m.descriptionKey = 'Stage 1/2: Cruise Ocean Drive to Vice Beach Hotel.';
+    } else if (m.id === 'mission_banco_heist') {
+      m.targetPosition = { x: -155, y: 1, z: 95 };
+      m.descriptionKey = 'Stage 1/2: Approach Banco de Leonida main entrance.';
+    }
     if (m.targetPosition) {
       this.registry.state.gpsDestination = {
         ...m.targetPosition,
@@ -80,6 +87,20 @@ export class ActivitiesMissionsSystem implements GameModule {
     }
     this.registry.events.emit('mission:started', { missionId });
     return true;
+  }
+
+  failMission(missionId: string, reason = 'Target lost or interrupted'): boolean {
+    const m = this.registry.state.missions.get(missionId);
+    if (!m || m.status !== 'active') return false;
+    m.status = 'failed';
+    m.descriptionKey = `Failed: ${reason}`;
+    return true;
+  }
+
+  retryMission(missionId: string): boolean {
+    const m = this.registry.state.missions.get(missionId);
+    if (!m || (m.status !== 'failed' && m.status !== 'active')) return false;
+    return this.startMission(missionId);
   }
 
   completeMission(missionId: string): boolean {
@@ -218,9 +239,25 @@ export class ActivitiesMissionsSystem implements GameModule {
   update(): void {
     const char = this.registry.getActiveCharacter();
     for (const m of this.registry.state.missions.values()) {
-      if (m.status === 'active' && m.targetPosition) {
-        const d = Math.hypot(char.position.x - m.targetPosition.x, char.position.z - m.targetPosition.z);
-        if (d < 8) {
+      if (m.status !== 'active' || !m.targetPosition) continue;
+      if (this.registry.state.gameOverState !== 'none') {
+        this.failMission(m.id, 'Protagonist incapacitated');
+        continue;
+      }
+      const d = Math.hypot(char.position.x - m.targetPosition.x, char.position.z - m.targetPosition.z);
+      if (d < 8) {
+        if (m.id === 'mission_vice_welcome' && m.stageIndex === 1) {
+          m.stageIndex = 2;
+          m.targetPosition = { x: 165, y: 1, z: 95 };
+          m.descriptionKey = 'Stage 2/2: Meet at Club Malibu Vice Beach.';
+          this.registry.state.gpsDestination = { ...m.targetPosition, label: `${m.titleKey} (2/2)` };
+        } else if (m.id === 'mission_banco_heist' && m.stageIndex === 1) {
+          m.stageIndex = 2;
+          m.targetPosition = { x: 0, y: 1, z: -6 };
+          m.descriptionKey = 'Stage 2/2: Return stolen bonds to Star Island Villa!';
+          this.registry.state.wantedStars = Math.max(this.registry.state.wantedStars, 2);
+          this.registry.state.gpsDestination = { ...m.targetPosition, label: `${m.titleKey} (Escape)` };
+        } else {
           this.completeMission(m.id);
         }
       }

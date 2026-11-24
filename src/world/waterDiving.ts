@@ -61,6 +61,8 @@ export class WaterDivingSystem implements GameModule {
   private oceanMesh!: Mesh;
   private oceanMat!: PBRMaterial;
   private poolMesh!: Mesh;
+  private shoreFoamMeshes: Array<{ mesh: Mesh; baseX: number }> = [];
+  private shoreFoamMat!: PBRMaterial;
   private bubbleParticles: ParticleSystem | null = null;
   public salvageSites: SalvageSite[] = [];
   public isCameraUnderwater = false;
@@ -79,21 +81,34 @@ export class WaterDivingSystem implements GameModule {
 
     const oceanNorm = this.loader.getTextureBank().createWaveNormalMap('ocean_normal', 256);
 
-    // Ocean & coastal water plane
-    this.oceanMesh = MeshBuilder.CreateGround('leonidaOcean', { width: 1600, height: 1600, subdivisions: 48 }, this.scene);
+    // Ocean & coastal water plane (high tessellation)
+    this.oceanMesh = MeshBuilder.CreateGround('leonidaOcean', { width: 1600, height: 1600, subdivisions: 84 }, this.scene);
     this.oceanMesh.position.y = 0;
     this.oceanMesh.receiveShadows = true;
 
     this.oceanMat = new PBRMaterial('leonidaOceanMat', this.scene);
-    this.oceanMat.albedoColor = new Color3(0.03, 0.26, 0.36);
-    this.oceanMat.metallic = 0.12;
-    this.oceanMat.roughness = 0.08;
+    this.oceanMat.albedoColor = new Color3(0.04, 0.36, 0.44);
+    this.oceanMat.metallic = 0.14;
+    this.oceanMat.roughness = 0.07;
     this.oceanMat.alpha = 0.88;
     this.oceanMat.bumpTexture = oceanNorm;
-    this.oceanMat.bumpTexture.level = 0.7;
-    oceanNorm.uScale = 28;
-    oceanNorm.vScale = 28;
+    this.oceanMat.bumpTexture.level = 0.72;
+    oceanNorm.uScale = 32;
+    oceanNorm.vScale = 32;
     this.oceanMesh.material = this.oceanMat;
+
+    // Animated shoreline breaking whitewash strips along Vice Beach & Starfish Island (IMG_8168)
+    this.shoreFoamMat = new PBRMaterial('shoreFoamMat', this.scene);
+    this.shoreFoamMat.albedoColor = new Color3(0.94, 0.98, 1.0);
+    this.shoreFoamMat.emissiveColor = new Color3(0.18, 0.25, 0.28);
+    this.shoreFoamMat.roughness = 0.52;
+    this.shoreFoamMat.alpha = 0.55;
+    for (let z = -150; z <= 180; z += 42) {
+      const foam = MeshBuilder.CreateGround(`viceFoam_${z}`, { width: 4.5, height: 40, subdivisions: 2 }, this.scene);
+      foam.position.set(255, 0.14, z);
+      foam.material = this.shoreFoamMat;
+      this.shoreFoamMeshes.push({ mesh: foam, baseX: 255 });
+    }
 
     // Star Island Villa Infinity Pool (elevated deck pool at x=22, y=1.35, z=12)
     this.poolMesh = MeshBuilder.CreateGround('villaInfinityPool', { width: 16, height: 9, subdivisions: 4 }, this.scene);
@@ -297,11 +312,19 @@ export class WaterDivingSystem implements GameModule {
   }
 
   update(): void {
+    const t = this.registry.clock.simulationTime;
     const tex = this.oceanMat.bumpTexture as Texture | null;
     if (tex) {
-      const t = this.registry.clock.simulationTime;
       tex.uOffset = (t * 0.018) % 1;
       tex.vOffset = (t * 0.012) % 1;
+    }
+
+    const wash = Math.sin(t * 1.45) * 1.8;
+    this.shoreFoamMat.alpha = 0.35 + Math.abs(Math.sin(t * 1.45)) * 0.38;
+    for (let i = 0; i < this.shoreFoamMeshes.length; i++) {
+      const f = this.shoreFoamMeshes[i];
+      f.mesh.position.x = f.baseX + wash + Math.sin(t + i) * 0.45;
+      f.mesh.position.y = 0.14 + Math.sin(t * 1.45 + i * 0.4) * 0.08;
     }
 
     const camPos = this.scene.activeCamera?.position;
@@ -329,6 +352,8 @@ export class WaterDivingSystem implements GameModule {
     this.bubbleParticles?.dispose();
     this.oceanMesh?.dispose();
     this.poolMesh?.dispose();
+    for (const f of this.shoreFoamMeshes) f.mesh.dispose();
+    this.shoreFoamMat?.dispose();
     this.oceanMat?.dispose();
     for (const s of this.salvageSites) s.mesh?.dispose();
     this.readiness = 'disposed';

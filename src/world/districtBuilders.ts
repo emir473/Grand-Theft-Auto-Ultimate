@@ -12,6 +12,11 @@ import { createParallaxFacadeMaterial } from '../rendering/shaders';
 import type { SpatialGrid } from './spatialGrid';
 import { ENTERABLE_INTERIORS } from './interiors';
 import { posterUVToWorld } from './leonidaGeoData';
+import {
+  buildHotelBalconyTrim,
+  buildWeatheredStiltHouseDetails,
+  buildZigzagMarinaPavilion,
+} from './landmarkDetails';
 
 export type DistrictMatMap = Record<string, PBRMaterial>;
 
@@ -90,8 +95,12 @@ export function buildViceBeachChunk(
     const facadeMat = createParallaxFacadeMaterial(`hotel_facade_${i}`, scene, 6, Math.round(h / 3), i + 1.7);
     makeBox(scene, gfx, `hotel_tower_${i}`, 22, h, 26, 192, h / 2 + 0.5, z, facadeMat, root);
     makeBox(scene, gfx, `hotel_trim_${i}`, 22.4, 0.4, 26.4, 192, h + 0.5, z, i % 2 === 0 ? mats.neon_coral : mats.neon_cyan, root, false);
+    buildHotelBalconyTrim(scene, 192, h, z, mats.travertine, root, i);
     spatialGrid.insert(`hotel_${i}`, 'building', { x: 192, y: 0, z }, { name: `Ocean Hotel ${i + 1}` });
   });
+
+  // Brutalist Zigzag Marina Pavilion behind 6-car showcase plaza (IMG_8171)
+  buildZigzagMarinaPavilion(scene, gfx, mats.concrete, mats.asphalt, root);
 
   // Beach Umbrellas, Loungers & Lifeguard Towers (IMG_8168)
   const umbColors = [new Color3(0.15, 0.62, 0.92), new Color3(0.95, 0.25, 0.62), new Color3(0.98, 0.78, 0.18)];
@@ -197,6 +206,7 @@ export function buildStateRegionsChunks(
   );
   makeBox(scene, gfx, 'stilt_cabin_body', 10, 3.2, 7.5, grXZ.x, 4.9, grXZ.z, stiltMat, stateRoot);
   makeBox(scene, gfx, 'stilt_deck', 12, 0.3, 9.5, grXZ.x, 3.3, grXZ.z, mats.travertine, stateRoot);
+  buildWeatheredStiltHouseDetails(scene, gfx, grXZ.x, grXZ.z, mats.travertine, stateRoot);
 
   // Allied Crystal Sugar Refinery near Ambrosia (IMG_8682)
   const alliedXZ = posterUVToWorld(0.546, 0.362);

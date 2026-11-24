@@ -40,6 +40,12 @@ export interface SerializedGameState {
   speedUnit: SpeedUnit;
   qualityProfile: QualityProfile;
   minimapRotate: boolean;
+  cameraMode?: 'third' | 'first';
+  hapticsEnabled?: boolean;
+  hapticsIntensity?: number;
+  touchControlsMode?: 'auto' | 'on' | 'off';
+  touchLayout?: 'right' | 'left';
+  touchOpacity?: number;
 }
 
 export class SaveManager {
@@ -75,6 +81,12 @@ export class SaveManager {
       speedUnit: s.speedUnit,
       qualityProfile: s.qualityProfile,
       minimapRotate: s.minimapRotate,
+      cameraMode: s.cameraMode,
+      hapticsEnabled: s.hapticsEnabled,
+      hapticsIntensity: s.hapticsIntensity,
+      touchControlsMode: s.touchControlsMode,
+      touchLayout: s.touchLayout,
+      touchOpacity: s.touchOpacity,
     };
   }
 
@@ -170,6 +182,12 @@ export class SaveManager {
       if (data.speedUnit) s.speedUnit = data.speedUnit;
       if (data.qualityProfile) s.qualityProfile = data.qualityProfile;
       if (typeof data.minimapRotate === 'boolean') s.minimapRotate = data.minimapRotate;
+      if (data.cameraMode === 'third' || data.cameraMode === 'first') s.cameraMode = data.cameraMode;
+      if (typeof data.hapticsEnabled === 'boolean') s.hapticsEnabled = data.hapticsEnabled;
+      if (typeof data.hapticsIntensity === 'number') s.hapticsIntensity = clamp(data.hapticsIntensity, 0, 1);
+      if (data.touchControlsMode) s.touchControlsMode = data.touchControlsMode;
+      if (data.touchLayout) s.touchLayout = data.touchLayout;
+      if (typeof data.touchOpacity === 'number') s.touchOpacity = clamp(data.touchOpacity, 0.3, 1);
 
       s.resumedFromSave = true;
       return true;
