@@ -1,0 +1,239 @@
+# MASTER PROMPT: GTA VI – ULTRA-PHOTOREALISTIC WEBGPU OPEN-WORLD GAME
+## Leonida State / Vice City – Complete, Playable Browser Prototype
+
+### 1. ROLE AND OBJECTIVE
+Act as a senior game-engine, rendering, physics, gameplay, AI, and simulation engineer. Develop a comprehensive, directly executable, modular open-world game called GTA VI, inspired by the world design and system depth of modern open-world action games. The goal is not merely to create an attractive scene, but to build a cohesive game with real game logic, states, interactions, and interconnected systems.
+
+The world must include Vice City, coastlines, beaches, swamps, rivers, ocean, highways, city districts, an airport, military areas, buildings, and enterable interiors. Required features include exploration, Lucia and Jason, traffic, vehicles, pedestrians, police, missions, economy, smartphone, weather disasters, water, diving, aviation, marine systems, public transportation, audio, VFX, and persistent save files.
+
+HIGHEST VISUAL PRIORITY: EXTREME PHOTOREALISM. Create the most believable and detailed presentation that the browser, GPU, and available assets can realistically support: realistic PBR materials, high-resolution textures, accurate material responses, natural lighting, realistic environmental illumination, realistic shadows and reflections, detailed buildings and roads, believable vegetation, photorealistic vehicles and characters, natural facial and body animation, realistic water surfaces, volumetric atmosphere, dynamic clouds, fog, rain, wet surfaces, particles, believable colors, and cinematic post-processing. Avoid the typical low-poly, plastic, cartoon, placeholder, or obviously AI-generated appearance. Prioritize fidelity, correct proportions, high-quality assets, natural movement, and visual consistency. Adapt quality to the hardware; never claim photorealism or features that have not actually been achieved or implemented.
+
+### 2. MANDATORY RULES
+- Preserve every system and subfeature listed here. Do not silently remove, rename, or merely fake anything visually. Internal optimizations are allowed as long as the functionality is preserved.
+- Write complete, executable code: no TODOs, empty functions, pseudocode, fake APIs, invented library methods, disconnected buttons, static NPC decorations, or vehicle models that cannot be controlled.
+- Every feature requires data, real logic, state changes, UI integration, error handling, and integration with dependent systems. Success messages may only appear after successful execution. Money, inventory, ownership, missions, and saving must remain consistent and transaction-safe.
+- If technical conflicts arise, identify the conflict, preserve the requirements, and implement a documented compatible alternative. Never claim functionality that does not exist.
+- Use only documented APIs and legally usable or self-created assets. Do not extract original files from commercial games. Do not implement real-money trading features. Hacking, theft, weapons, police, and violence must exist only as abstract fictional game mechanics, without real-world security systems or instructions transferable to real weapons.
+- **Modular file-size rule:** Never squeeze the entire project into a small number of oversized files. Every source-code file must contain **no more than 500 lines**, including comments and blank lines. If a file approaches this limit, split it into additional focused modules/submodules with clear responsibilities and stable interfaces. There is no fixed maximum number of source files or modules. Keep the architecture cohesive and maintainable; do not create pointless one-function files merely to fragment the project.
+- **Expandable architecture:** The twelve areas listed below are baseline functional domains, not a limit on the number of modules, files, systems, or future features. Create additional modules whenever the project complexity requires them. Preserve existing functionality when adding or refactoring modules.
+
+### 3. TECHNOLOGY AND ARCHITECTURE
+Mandatory technology stack: JavaScript ES2022+, native ES modules, HTML5, CSS3, Babylon.js 6+ (do not use Three.js), WebGPU as the primary renderer, WebGL2 fallback, Web Audio API, IndexedDB, requestAnimationFrame, and Pointer Events for mouse, keyboard, touch, and stylus input. Check API and version compatibility. If WebGPU fails, fall back cleanly to Babylon WebGL2 without creating duplicate engines, render loops, or corrupted resources.
+
+Organize the project around these twelve **baseline functional domains**. They are architectural categories, not a required exact module count or a restriction on the number of files. Split each domain into as many focused modules/submodules as needed, and add entirely new domains whenever future features require them. The original filenames below are suggested entry-point names, not a mandatory one-file-per-domain structure:
+1. index.html + loader.js – canvas, HTML, HUD, menus, loading, localization, input.
+2. ui_smartphone.js and related app modules – iFruit OS v6 and all smartphone apps.
+3. engine_grafik.js and rendering submodules – engine, rendering, shaders, post-processing, GPU/memory management.
+4. welt_und_wetter.js and climate submodules – day/night cycle, atmosphere, weather, wind, and storms.
+5. welt_architektur.js and world submodules – world, roads, city, buildings, interiors, and streaming.
+6. physik_wasser_tauchen.js and water submodules – water, waves, buoyancy, swimming, and diving.
+7. spieler_steuerung.js and character submodules – characters, movement, switching, and attributes.
+8. kampf_animation.js and animation submodules – animation, cover, combat states, ragdoll, and replay camera.
+9. waffen_inventar.js and inventory submodules – inventory, Weapon Wheel, fictional combat/hit mechanics, and vehicle storage.
+10. fahrzeug_physik.js and vehicle submodules – vehicles, handling, damage, fuel, theft, and trailers.
+11. stadt_luftfahrt_marine.js and transport submodules – airport, aircraft, ships, military zones, and public transport.
+12. ki_polizei_wirtschaft.js and simulation submodules – NPCs, crowd AI, navigation, police, audio, encounters, economy, and persistence.
+
+Create further modules when justified, for example dedicated mission systems, asset management, audio, UI components, save migrations, world streaming, testing, or future upgrade systems. Do not force unrelated features into one of the original files just to preserve the baseline list. Keep module boundaries explicit and avoid cyclic dependencies.
+
+Use centralized engine/dependency management with exactly one Babylon engine, scene, camera, render loop, game/simulation clock, input manager, event bus, object and resource registry, state manager, quality profiles, performance metrics, initialization, and shutdown. Modules must receive dependencies through constructors or a clearly defined registry; do not use uncontrolled global access or cyclic imports.
+
+Each module must validate its dependencies, initialize its states and events, load assets, and provide start, update when needed, and stop/dispose methods. Repeated initialization must be safe. Define the initialization order and readiness states. Use one consistent coordinate system (document the Babylon configuration), axes, angles, and units: position/distance in meters, time in seconds, speed in m/s, acceleration in m/s², force in newtons, torque in Nm, mass in kg, angles internally in radians, and money as an integer in the smallest currency unit. Convert to km/h and mph only through centralized display conversion.
+
+Separate render time, simulation time, game time, day time, weather time, animation time, and effects time. Use a fixed physics timestep and accumulator; limit the number of steps per frame and measure overload without uncontrolled time jumps. The Weapon Wheel slows simulation to 0.1 and restores the previous time factor afterward. UI, audio, and storage may continue independently. Use consistent IDs and data models for players, NPCs, vehicles, weapons/items, buildings/interiors, properties, road nodes/edges, taxis, missions, encounters, police/wanted state, weather/water, aircraft/ships, transactions/stocks, savegames, social feed, audio, and events. Keep runtime mesh references separate from persistent IDs.
+
+Create a centralized, validated event contract containing at least: game:initialized; world:chunkLoaded/Unloaded, weatherChanged, timeChanged; player:characterChanged/died/respawned/arrested; vehicle:entered/exited/damaged/stolen/repaired; taxi:requested/arrived/destinationSelected/tripCompleted; weapon:fired; combat:hit/knockout; police:wantedChanged/crimeReported; economy:transactionCompleted; property:purchased; mission:started/completed/failed; inventory:changed; phone:opened/closed; social:clipPublished; save:completed/failed. Define event data, producers, consumers, and trigger conditions. Prevent event loops and remove listeners when unloading. Transactions must safely abort or roll back when errors occur.
+
+### 4. MODULE 1 – index.html + loader.js
+Create a responsive HTML5 game framework with canvas, HUD, menus, loading overlay, pause functionality, optional developer console, and UI containers. Adapt the canvas to window size, pixel density, desktop, and touch devices. Pointer Events must block gameplay input only while the UI is open.
+
+Fully implement the HUD and connect it to real game states:
+- Minimap with roads, player position/direction, objectives, taxi, permitted police markers, context-dependent icons, and selectable north-up or rotating orientation.
+- Speedometer with km/h or mph, engine condition, gear/drive mode, RPM, and damage warning.
+- Altimeter with a defined reference and unit; bank-angle indicator for aircraft; 3D GPS with destination, route, turn-by-turn instructions, distance, missed turns, and route recalculation.
+- LocalizationManager: English as the default language, prepared for German, Spanish, and French. Localize all HUD, menu, app, dialogue, mission, notification, subtitle, settings, radio, news, error, and game-over text through keys, fallbacks, and runtime language switching.
+
+Create a cinematic Vice City loader that asynchronously loads actual required and optional assets (for example, using AssetsManager and streaming). Show real weighted progress, percentage, status, errors, textures, geometry, materials, and audio. Do not artificially increment progress values. Optional high-resolution resources must not block startup. Handle errors and cancellation; fade out smoothly only after startup conditions have been met.
+
+WASTED: actual death, fade, black-and-white/desaturation, vignette, localized text, fine/weapon loss according to the rules, and respawn outside Vice City General Hospital. BUSTED: actual arrest, appropriate presentation, bail, removal or impound of illegal weapons and ammunition, and respawn at Leonida State Penitentiary or Vice City PD. Both flows must be idempotent, with no duplicate penalties and no invalid input during transitions.
+
+Developer console accessible through ^/~, an alternative configurable key, and a touch button. Validate commands for teleportation, spawning registered vehicles/NPCs, setting time/weather/wanted level, inspecting entities, and displaying errors and performance metrics (render/update time, draw calls, entities, physics objects, textures/resources). GPU memory must be shown only when actually available; otherwise show an estimate. Do not automatically open the console for normal players.
+
+### 5. MODULE 2 – ui_smartphone.js
+Create an interactive, responsive iFruit OS v6 smartphone, opened with the M key and a touch button, including an app grid, status information, notifications, navigation, focus handling, and correct input blocking. Gameplay simulation must continue while the phone is open.
+
+- Downtown Cab Co./Rideshare: request a taxi, check/spawn/assign an available taxi, determine a nearby drivable pickup point, check accessibility, navigate using a road graph/A*, display progress, handle arrival/boarding, select a destination on the map, calculate a route, cancel/speed up/skip the ride, and complete it cleanly. Handle obstacles, road closures, and invalid destinations; never spawn at an invalid location.
+- Mechanic/Delivery: select compatible owned vehicles, verify ownership/availability, select a suitable road location, perform delivery/spawning, report status/errors, and remove markers.
+- Finance/Stocks: internal LCN/BAWSAQ simulation with instruments, prices, accounts, buying/selling, fees, holdings, profit/loss, history, price charts, and in-game events. Trends and volatility must be understandable rather than purely random. Use exact integer money values; do not allow purchases without sufficient funds or sales without holdings.
+- Properties/Tuning: safehouses, garages, workshops, vehicle settings, catalogs, prices, locations, and purchase/ownership status. Offer only objects that actually exist and are available.
+- Hacking minigames: purely fictional electronic locks, keycards, and machines; difficulty levels, time limits, visual clues, input validation, failure/success states, optional alarm risk, and mission/crime events. Do not interact with real systems.
+- 911: police, ambulance, and fire services with type, location, status, destination, and actual dispatch. If units are unavailable, show a delay/error instead of silently reporting success.
+- Leonida Social Feed: player/NPC clips, followers, interactions, reach, event context, feed text, and persistence. NPC recordings may generate their own social events; police are informed only when a genuine witness/reporting event occurs.
+- Radio/News: multiple stations and playlists, track metadata, transitions, DJ voice output, and dynamic news about player actions, traffic, and weather. Use only original or legally usable content; handle missing audio cleanly.
+
+### 6. MODULE 3 – engine_grafik.js
+Initialize Babylon WebGPU asynchronously and fall back to WebGL2 if initialization fails. Keep scenes, materials, shaders, and effects compatible; replace or disable unsupported features, clean up resources, and run only one render loop. Provide Low/Medium/High/Ultra graphics profiles with dynamic resolution, shadows, LOD, vegetation, NPCs, particles, clouds, and post-processing. Profiles must be changeable at runtime and always account for hardware limits.
+
+For maximum photorealism: PBR BaseColor/Metallic/Roughness/Normal/AO/Emissive maps; realistic glass, metal, fabric, wood, asphalt, and water responses; wet materials; reflections; and natural lighting changes. Post-processing: ACES, HDR bloom, depth of field with a real focus point, controlled chromatic aberration, motion blur based on movement data, vignette, and state transitions. Use volumetric/approximated 3D clouds, fog/ray marching, swamp ground fog, light scattering, and quality/distance limits. Use parallax interior mapping for non-enterable windows with facade coordinates, room depth/divisions, material and lighting variation, reproducible rooms, and night lighting; do not confuse these with real enterable interiors.
+
+Implement dynamic shadows using Babylon ShadowGenerator, a suitable ESM variant and/or CSM, up to 4096² only when hardware permits. Document the actual active method, filter, bias, splits, distance, and object types. Use distance-based LOD, frustum/occlusion culling, instancing, region streaming, unloading, and visibility filters. Do not use stale occlusion results that permanently hide objects. Manage textures, buffers, render targets, shaders, meshes, materials, and particles with clear release rules. Handle tab switching, resizing, context loss, restarts, and scene changes.
+
+### 7. MODULE 4 – welt_und_wetter.js
+Implement a continuous astronomical day/night cycle with sun/moon positions, altitude, star rotation, Rayleigh/Mie scattering, twilight, sky color, and seasonal Leonida parameters. Use one shared lighting state for streetlights, buildings, shops, neon, signs, windows, headlights, and emergency vehicles.
+
+Weather state machine: sunny, cloudy, rain, tropical storm/hurricane. Support regional conditions, transition duration, and intensity. Every state defines precipitation, wind direction/strength, visibility, clouds, humidity, wetness, audio, NPC effects, vehicle effects, and water effects. A time-/location-dependent wind vector field must affect trees, lightweight objects, particles, vehicles, and the environment. Rain includes droplets, splashes, glass effects, surface wetting, realistically distributed puddles, water accumulation, tire traction changes, and vehicle spray. A hurricane must be an integrated world event affecting wind, rain, visibility, clouds, lighting, flying lightweight objects, vegetation, regional flooding, vehicle handling, navigation, NPCs, audio, radio, and smartphone warnings. Limit effects regionally and for performance.
+
+### 8. MODULE 5 – welt_architektur.js
+Divide the world into streamable chunks/regions: city, coast, swamp, roads, highways, railways, waterways, and buildings. Do not unnecessarily rebuild existing regions; preserve persistent world states. Use hardware instancing for repeated palm trees, streetlights, signs, vegetation, parking details, and building details. Implement a Spatial Grid with insertion, removal, position updates, cell changes, neighbor/radius/visibility queries, and streaming integration.
+
+Create a procedural, genuinely drivable network of highways, main/side streets, intersections, one-way roads, turning connections, rail/water routes, parking lots, stops, and spawn points. Nodes/edges must contain start/destination, length, direction, speed limit, road type, weight/cost, lanes, and closure status. Routes must match geometry that actually exists.
+
+Key locations: Star Island luxury villa as the starting location, with courtyard, infinity pool, underground garage, safe, helicopter landing pad, interiors, and persistent ownership; banks with public areas, security/vault areas, and mission states; Vice City General Hospital as medical location and respawn point; Leonida State Penitentiary with restricted areas/respawn; Fort Zancudo and Port Gellhorn as military installations with checkpoints, vehicles, and alert states.
+
+Seamlessly enterable interiors for gas-station shops, Ammu-Nation, clothing stores, nightclubs, villas, selected banks, and public buildings. Stream without visible loading screens, with collision, entrances/exits, lighting, audio zones, NPC navigation, and interactions. Distinguish exterior shell, enterable room, virtual windows, collision, decoration, and interactive objects; use simplified collision meshes.
+
+### 9. MODULE 6 – physik_wasser_tauchen.js
+Create multi-layered water for the ocean, coast, swamps, rivers, pools, and underwater areas. Separate visual waves from gameplay data. Support wave height/direction/normal, currents, spray, shoreline, reflections, turbidity, and depth color. Use multi-component Gerstner waves for the water surface and relevant queries; avoid unnecessarily high-resolution simulation for every object.
+
+Character states: land, water, surface, swimming, diving, underwater, surfacing, low oxygen, and shore. Include transition animations, drag, buoyancy, currents, depth, oxygen, diving equipment, and safe surfacing points. Calculate buoyancy/net force from weight and displaced volume using appropriate approximations; do not claim exact physics based on visuals alone. Underwater caustics, light rays, depth color/fog, turbidity, tone mapping, air bubbles, and underwater audio must use shared depth calculations. Diving locations: wrecks, aircraft wreckage, briefcases, and salvage objects with position, depth, interaction, reward, state, and optional hazards/missions. Persistent salvage must never reward the player more than once.
+
+### 10. MODULE 7 – spieler_steuerung.js
+Provide unified keyboard/mouse/touch controls: walk, fast walk, run, sprint, directional/look control, jump, interact, enter/exit vehicles, swim, dive, climb, crouch, and crawl. Movement speed/acceleration must be configurable and frame-rate independent.
+
+Two playable characters, Lucia and Jason. Switching characters must preserve separate states, transition the camera, active control, HUD, and input target, and ensure a valid position. A dynamic trust/synergy matrix affects mission cooperation, cover, chase support, heists, reactions, and team actions. Each character has attributes: shooting skill, stamina, driving skill, and lung capacity. Increase them in a traceable way through activities/missions/training and connect them to gameplay. Body/fitness system with activity, stamina, muscle mass, body fat, nutrition, and training: gradual, traceable changes, recovery, and no abrupt jumps; display only what the character assets support. Physics must use raycasts, ground contact/normals, stair interpolation, hanging, controlled sliding on slopes, environmental collision, and position recovery. Dynamic dirt from mud, sand, and dust, plus a non-graphic blood status; use material/decal/mask effects. Allow cleaning in water, showers, or car washes and save relevant states.
+
+### 11. MODULE 8 – kampf_animation.js
+Create a state-based blend tree for idle, walking, running, sprinting, crouching, climbing, crawling, swimming, diving, cover, aiming, shooting, melee, impact, falling, getting up, carrying, and vehicle interaction. Transitions must use actual states; do not make abrupt or inappropriate switches. Physical cover must use real geometry: detection, entering, alignment, movement, corners, exit, and aiming.
+
+Use a hybrid of keyframe animation and ragdoll for hits, falls, and collisions; only use actual available Havok/Cannon adapters. Define body masses, joint limits, filters, activation, impulse handoff, return to animation, and disposal. Implement fictional combat/melee mechanics with attack, dodge, counter, takedown, block, hit reaction, and hostage states; define clear start/active/end/cancel phases and actual in-game collision checks, with no duplicate hits. Allow unconscious/dead characters to be picked up, carried, put down, placed in suitable trunks, or hidden in registered areas; correctly manage distance, weight, animation, collision, capacity, and entity state. Cinematic Replay/Director camera with free positions, stunt shots, slow motion, camera moves, and chase perspectives based on limited actual simulation recordings; do not reset the active simulation.
+
+### 12. MODULE 9 – waffen_inventar.js
+Use a data-separated inventory: weapon type, ownership, magazine capacity, loaded and reserve ammunition, equipment, selection, vehicle storage, loss, and recovery. Distinguish visibly carried handguns, heavy weapons, shotguns, back-mounted weapons, and trunk capacity; when a limit is reached, offer storage, dropping, or switching. Circular Weapon Wheel with categories, icons, ammunition, selection/confirmation/cancel, and mouse/touch controls. Opening sets the time factor to 0.1; closing restores the previous factor without overwriting pause/slow-motion states.
+
+Implement combat/projectile/hit mechanics exclusively as an abstract fictional game simulation: spread, simplified travel, in-game wind/gravity values, limited lifetime, hit detection, fictional material classes, and consistent hit reactions. Do not use real weapon parameters or practical instructions. Hit zones must be game hitboxes with non-graphic reactions (e.g. movement impairment/disarming/knockout), with no duplicate hits. Distinguish shot, hit, damage, observation, witness report, and police awareness events; connect them to police, missions, social feed, audio, and crowd AI.
+
+### 13. MODULE 10 – fahrzeug_physik.js
+Every vehicle must have an ID/type, mass, position/orientation, linear and angular velocity, engine/transmission, wheels, suspension, tires, body/damage state, fuel, ownership, alarm, driver/passengers, and tuning. Provide different handling profiles.
+
+Four-point suspension (with support for more wheels) using spring/damper forces, suspension travel, wheel-ground contact, wheel load, body position, roll/pitch, damping, and loss of contact. Drivetrain with torque curve, RPM, gears/ratios, drivetrain type, optional differential, brakes, steering, grip, speed limit, and fuel consumption. Do not force top speed independently of power/resistance.
+
+Tire grip depends on surface, wetness, tire condition, normal force, slip, speed, and optionally tire compound; support dry/wet asphalt, gravel, mud, and sand. Hydroplaning must plausibly depend on water film, speed, and tires, gradually affecting steering/braking; do not teleport the vehicle. Soft-body or controlled body deformation based on impact energy/point/zone with limits and persistent damage. Support suitable detachable doors, bumpers, hoods, and parts as limited rigid bodies with lifetimes. Fuel, leaks, warnings, and breakdowns; in-game explosions only as consistent damage events. Cockpit with speedometer, RPM, rear-view mirror rendering, steering wheel, lights, engine, alarm, and optional cameras; budget mirror rendering.
+
+Vehicle theft as a complete state: locked/unlocked, alarm, window interaction, access, fictional minigame, ownership/wanted status, and witness/police/social events. Trailers/towing with hitch/joint adapter, mass, articulation angle, movement, cargo, sliding, and winch. Keep the coupled states numerically stable and separate.
+
+### 14. MODULE 11 – stadt_luftfahrt_marine.js
+Vice City International Airport (VCIA) with runways, taxiways, parking, passenger and cargo areas, flight plans, ground control, security, and logistics. Automated passenger/cargo air traffic with a target interval of 10 minutes, but only when aircraft are available, runways are clear, and states are collision-free; manage delays cleanly. Aircraft phases: parked, pushback, taxiing, takeoff, liftoff, climb, cruise, descent, approach, landing, rollout, reverse thrust, and parking, all dependent on position/speed/navigation. Passengers carry luggage, move to gates, wait, board, and disembark; limit NPC budgets and group management. In-game aircraft takeover must verify access, change aircraft/pilot state, adjust autopilot/scheduler, and generate alert/police/mission events.
+
+Marine: cargo ships, luxury yachts, police boats, and jet skis respond to the water module; heading/roll/pitch, waves, currents, rudder, propulsion, drag, obstacles, and limits. Public transport: city buses and subways with stops, routes/schedules, vehicle state, doors, boarding/disembarking, NPC passengers, arrivals/departures. The subway requires its own rail network and controlled station transitions; it must not pass through obstacles. Fort Zancudo and Port Gellhorn are restricted zones with detection, warnings, and escalation: patrols, interceptors, tanks, fictional SAM air defense, wanted status, and restricted access. AI units may only spawn when their position, target, and availability are valid. These systems must remain purely game simulations.
+
+### 15. MODULE 12 – ki_polizei_wirtschaft.js
+NPC/crowd AI: shared entities for pedestrians, drivers, police, employees, and passengers with ID, type, position, orientation, movement, task, target, perception, reaction, and optional inventory. Reusable state machines with Idle, Wander, MoveToTarget, Work, Wait, WeatherReaction, Observe, Flee, SeekHelp, RecordVideo, Drive, Dialogue, Rest/Sleep, Injury, and PoliceReaction states. Define valid transitions and enter/update/exit actions. Crowds use sidewalks, intersections, shops, stops, umbrellas, groups, and collision avoidance, and react to sounds, crimes, and weather; they must not merely move randomly back and forth.
+
+NPC recording/social system: perceive an event, check visibility/hearing conditions, make a decision based on personality/situation, create a clip gameplay event, and update feed/followers/reach. Notify police only through a separate report event.
+
+Nightlife and activities: enterable club/strip-club game environments and darts, pool, poker, arm wrestling, deep-sea fishing, wildlife hunting, and trophy sales. Each activity needs entry, active state, controls, rules, result, exit, possible reward, and persistence. Results must come from actual gameplay.
+
+Navigation: A* on graph G=(V,E) for roads, taxis, NPC vehicles, and waypoints; use appropriate heuristics/edge weights, closures, detours, invalid/unreachable destinations, and a separate pedestrian network where needed.
+
+Spatial audio (Web Audio API): engines/RPM, turbo, tires, exhaust, aircraft, ships, sirens, ambience, weather, underwater, and room reverb in tunnels, airports, and clubs. Parameters must come from actual game states. Doppler must use source/listener position and velocity with speed of sound, smoothed over time. Audio occlusion/diffraction, distance, direction, material damping, raycast/geometric approximation, room reverb, and indoor/outdoor/underwater filters. Clearly identify approximations; do not claim fake ray tracing.
+
+Police/forensics: in-game traces (DNA/fingerprint status, license plate/registered owner, camera/face event, observed/reported crime) with location, time, and investigation status. Police may only know clues they have actually obtained. Five-star wanted system based on severity, witnesses, visibility/hearing, identification, escape, duration, area, vehicle, and available units. Field of view uses angle, sight distance, target height, line of sight, occlusion, lighting, and identification time. Sound detection considers type, position, loudness, distance, damping, and occlusion; sounds must not reveal the player's exact position automatically.
+
+Police tactics: pursuit vehicles, coordinated chases, fictional physics-based PIT maneuvers, spike strips with real contact areas, helicopter searchlights, radio, search zones, and abandoning pursuit after losing contact. Synthesized/localized radio at pursuit start, including suspect description, last location, backup, roadblock, and lost visual contact; provide text and available voice output.
+
+Random encounters: street races, robberies, deals, conflicts, police events, assistance events, and regional events. Each encounter needs activation conditions, spawn region, flow, success/failure, cleanup, reward, and persistence, with spatial/time limits.
+
+Economy/properties: separate cash and bank balances; ATMs, deposits/withdrawals, purchases, properties, garages, tuning, robberies, suitable fictional minigames, stocks, mission rewards, fines/bail, and stolen items. Every money movement must have a trigger and history record. Robberies/hacking must use real game states for alarms, loot, success, and failure.
+
+IndexedDB: schema, versioning, upgrades/migrations, save/load, validation, error handling, and transactions. Save at least active character, position/respawn, inventory, cash/bank, vehicles/tuning, attributes, properties/garages, relevant encounters, missions, settings, language, and stocks. Never report success for a failed save; handle aborted transactions and database errors.
+
+### 16. GLOBAL GAME START, ECONOMY, AND GAME-OVER RULES
+First game start: initialize engine, load required assets, register main world, build Star Island region/villa, create character, connect camera/HUD, validate state, and enable input. Distinguish a new game from an existing save being resumed.
+
+Starting point is the courtyard of the Star Island luxury villa.
+
+Death/WASTED: register once, correctly lock controls, play game-over sequence, deduct 10% of cash (maximum 5,000 in-game currency; never allow a negative balance), apply weapon-loss rules, respawn at the hospital, restore character/camera/controls, and save when appropriate. Apply the penalty only once per death event.
+
+Arrest/BUSTED: register once, reset wanted status, calculate and deduct bail, remove or impound prohibited weapons/ammunition, respawn at the prison or a valid PD point, update inventory/camera/state consistently, and save when appropriate. Define behavior when funds are insufficient; never apply duplicate deductions.
+
+Tuning: engine power, top speed, torque, suspension, spoiler, paint/metallic/pearlescent effects, wheels, and other suitable parts. Parameters must actually change handling or appearance. Verify price before purchase; apply changes only after a successful transaction.
+
+Wardrobe: clothing/outfits, tattoos, and hairstyles appropriate to the character assets actually available, with valid state and persistence.
+
+ATMs: deposits/withdrawals/balance checks only near registered ATMs. Balances must never become negative; log every transaction.
+
+Robberies/hostages: shops and banks with mission, alarm, NPCs, witnesses, escape, loot, police, optional fictional hacking, success/failure/cancel states, and payout. Hostage control must be a real gameplay and NPC state, not a static animation.
+
+Cargo: trailers, hitches, shifting cargo, cargo weight/condition, winches, and cargo interactions. Cargo should affect center of mass and handling wherever possible.
+
+### 17. AUDIO, VFX, PERFORMANCE
+Audio voices for engines, turbo, tires, exhaust, and sirens must use simulation values; control volume, priorities, and transitions. Particles: sparks, tire smoke, rain, splashes, water mist, sea spray, bubbles, dust, muzzle/explosion/impact effects; include resource budgets, lifetimes, and recycling. Decals for impacts/traces must account for surface, geometry, lifetime/persistence, and cleanup. Clothing/hair must use available cloth/hair physics or a documented simplified solution; do not make false simulation claims.
+
+Target platforms: powerful desktop PCs, integrated GPUs, compatible Apple Silicon iPads, WebGPU, and WebGL2. Do not guarantee 60 FPS universally. Use 60 FPS / approximately 16.67 ms as a target budget; measure actual CPU update time, render/frame time, frame variance, active entities, draw calls, visible objects, particles, physics, and measurable memory.
+
+Simulation levels: near = full interaction/animation/collision/audio; medium = simplified animation, lower update frequency, perception, and physics; far = statistical crowd/traffic states and minimal updates. Preserve states when switching levels. Adaptive quality must gradually reduce post-processing, shadows, particles, distant details, remote simulation frequency, and render resolution under load; core gameplay logic must remain active. Set centralized limits for NPCs, vehicles, particles, projectiles, decals, audio sources, temporary meshes, chunks, replay data, and render targets.
+
+### 18. ROBUSTNESS, SECURITY, AND TESTING
+Validate positions, time, money, IDs, inventory quantities, weather, angles, speeds, missions, and saves. Prevent NaN, Infinity, invalid indices, and unbounded states. Event-handler errors must not crash the entire game uncontrollably; log the event, module, object, state, and cause. Handle critical errors in a controlled way. Browser cases: resize, tab switching/inactivity, focus loss, audio permission, storage failure, context loss, missing WebGPU, asset errors, and interrupted simulation. Prevent duplicate transactions/penalties/rewards/spawns, lost vehicle ownership, invalid accounts/inventories, and corrupted database upgrades.
+
+Test each module individually for initialization, invalid configuration, missing dependencies, duplicate initialization, update, stop, cleanup, and error handling. Integration tests must include at least these flows:
+A. Game startup: WebGPU or WebGL2 fallback, assets, villa, controls.
+B. Vehicle: enter, drive, brake, steer, exit, correct HUD values.
+C. Rain: wetness and hydroplaning affect grip.
+D. Taxi: request, approach, board, destination route.
+E. Character switching: separate states, controls, camera, HUD.
+F. Smartphone/economy: app states and real transaction.
+G. Combat: attack, hit validation, and NPC state.
+H. Police: perception, witnesses, wanted level, pursuit, arrest.
+I. Airport: valid flight phases and coordinated runways.
+J. Diving: dive, oxygen, underwater movement, surface.
+K. Saving: save, reload, validated restoration.
+L. Recovery: optional asset errors, database abort, and browser pause without inconsistent state.
+
+A feature is considered implemented only when its data structure, real logic, controls (if needed), state changes, module communication, error cases, and compatibility are present. A visual mock-up alone is not sufficient.
+
+### 19. SOURCE FILES, MODULAR DEVELOPMENT, AND GITHUB DELIVERY
+Build the actual project in the available development workspace and maintain it as a real, organized source-code project. Do not squeeze the implementation into a single response or a handful of giant files. The complete implementation belongs in the project files and, when an authorized GitHub connection is available, in the GitHub repository.
+
+**Strict file-size limit:** Every source-code file must be **500 lines or fewer**, counting comments and blank lines. Check line counts before considering a file complete. When a file would exceed 500 lines, split it into additional focused modules and update imports/exports, interfaces, registration, and tests accordingly. Never omit features or shorten the implementation merely to stay under the limit. There is no fixed maximum number of files or modules.
+
+Use a clear project structure, for example:
+- `index.html` and the application entry point.
+- `src/core/` for engine lifecycle, shared state, dependency registration, events, timing, and resource management.
+- `src/rendering/` for Babylon.js, WebGPU/WebGL2, materials, lighting, shadows, effects, and quality settings.
+- `src/world/` for regions, roads, buildings, interiors, streaming, water, and weather.
+- `src/gameplay/` for players, vehicles, missions, inventory, interactions, and activities.
+- `src/ai/` for pedestrians, traffic, police, navigation, and encounters.
+- `src/ui/` for HUD, menus, smartphone, localization, and input interfaces.
+- `src/audio/`, `src/persistence/`, `src/assets/`, and `src/tests/` for their respective systems.
+
+This structure is a guide, not a rigid limitation. Adapt it when the project grows. Keep each file focused, use clear names, consistent imports/exports, documented public interfaces, and shared data contracts. Avoid monolithic files, duplicate implementations, cyclic imports, unnecessary fragmentation, and hidden dependencies. Keep the twelve baseline domains described earlier as logical coverage areas, while allowing each area to contain many files and submodules.
+
+**GitHub delivery:** If a GitHub integration or authenticated Git workflow is available and the user has authorized access, create or use the intended repository, organize the project files, commit coherent milestones, and push the implementation directly to GitHub. Preserve existing repository content unless a change is explicitly required. Use clear commit messages. Do not commit API keys, passwords, tokens, private credentials, or other secrets. Never claim that a repository was created, a commit was made, or files were uploaded unless the operation actually succeeded and was verified.
+
+If GitHub access is not available or authorization is missing, do not pretend to upload anything. Continue building the complete project in the available workspace, explain the exact access limitation, and provide the clearest supported next step for connecting or exporting the repository. Do not block all development merely because GitHub access is unavailable.
+
+**Implementation and verification:** Provide complete executable code in the project files, not TODOs, pseudocode, fake APIs, empty functions, disconnected buttons, or file placeholders. Ensure all imports/exports resolve and all referenced files exist. Add or update tests as systems are implemented. Run the available build, type, lint, and test commands; report which checks actually ran and their real results. Distinguish verified behavior from assumptions and untested features.
+
+Work in coherent milestones and continue in dependency order. Start with the project foundation and a playable vertical slice, then expand the systems without deleting or breaking completed functionality. When context or response limits are reached, record the exact completed files, current architecture, remaining tasks, test status, and next implementation step in a project progress document (for example, `PROJECT_STATUS.md`) so work can resume reliably. Do not claim unfinished modules are complete.
+
+### 20. FINAL INTEGRATION
+All modules must use the same world state. Examples: weather affects water, vehicles, NPCs, audio, and visibility; the road graph is shared by taxis, traffic, police, and NPCs; vehicles provide engine sounds, HUD data, crime events, and social events; the smartphone uses real vehicles, properties, missions, money, and coordinates; inventory is connected to vehicle storage; police only know about events they have perceived or that have been reported; character switching updates camera/input/attributes/team; diving uses shared water and current data; tuning changes actual vehicle parameters; the airport uses aircraft states and routes; persistence saves actual game states.
+
+Before every complex implementation, determine states, data sources, events, dependencies, and error paths. Check each file against the existing modules. Test all acceptance criteria before completion. Create a comprehensive, photorealistic, playable, directly executable open-world game – not a presentation, not merely an architecture concept, and not a collection of isolated demos.
+
+### 21. VISUAL REFERENCES – USER-PROVIDED IMAGES
+I will provide multiple reference images showing exactly how I want the game to look. Carefully analyze ALL uploaded images and use them as the primary visual references for the entire game. Reproduce their visual style, graphical quality, lighting, colors, environments, architecture, character appearance, vehicle designs, materials, atmosphere, HUD, and overall presentation as closely and accurately as technically possible.
+
+The finished game must visually match the provided references, not merely be inspired by them. Maintain visual consistency across the entire world and all game systems. Do not ignore important details, simplify the references unnecessarily, or replace their style with generic AI-generated graphics. Use the images as the visual target when making all graphics, rendering, asset, and UI decisions. If multiple images show different locations or perspectives, preserve their respective details and apply them to the corresponding parts of the game.
+
+---
+
+IMPORTANT PROJECT NOTE – THIS IS ONLY THE BEGINNING:
+This is only the initial foundation and starting point of a much larger project. It represents only a small part of what I intend to add in future updates. I will continuously provide major upgrades, extensive new features, additional gameplay systems, and substantial expansions. I will also send multiple visual reference images later.
+
+Do not treat this prompt as the final project scope or assume that development will stop after the listed requirements. The project is expected to grow significantly. You are explicitly allowed and expected to create additional modules, submodules, folders, source files, systems, and supporting tools whenever needed. Do not force new features into existing files or compress the architecture to keep an arbitrary module count.
+
+Every source-code file must remain at or below 500 lines. Split larger implementations into additional well-structured files while preserving complete functionality and clean interfaces. Keep the project scalable so future updates can be integrated without rewriting the entire game. Preserve all previously implemented systems and functionality unless I explicitly request a change.
+
+When authorized GitHub access is available, keep the repository updated by committing and pushing completed milestones. I will provide the upcoming upgrades and visual reference images in later messages; integrate them into the existing project as additive updates unless I explicitly say that something should replace an existing feature.

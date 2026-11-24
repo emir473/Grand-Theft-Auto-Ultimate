@@ -1,0 +1,6 @@
+{
+  "name": "GTA VI: Leonida & Vice City",
+  "description": "Photorealistic Babylon.js WebGPU open-world action prototype set in Leonida State and Vice City.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
