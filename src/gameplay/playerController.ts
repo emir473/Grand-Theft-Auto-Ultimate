@@ -18,17 +18,16 @@ import type { InputActionState } from '../core/input';
 import type { GraphicsEngine } from '../rendering/engineGrafik';
 import type { WorldArchitecture } from '../world/worldArchitecture';
 import type { WaterDivingSystem } from '../world/waterDiving';
-import { ACTIVITY_SPOTS, ATM_POINTS, ENTERABLE_INTERIORS } from '../world/interiors';
 import { buildCharacterRig, type CharacterRig } from './characterRig';
+import {
+  completePlayerRespawn,
+  evaluateNearbyPrompt,
+  triggerPlayerBusted,
+  triggerPlayerWasted,
+  type NearbyPrompt,
+} from './playerLifecycle';
 
-export type { CharacterRig };
-
-export interface NearbyPrompt {
-  key: string;
-  params?: Record<string, string | number>;
-  action: 'vehicle' | 'interior' | 'exit_interior' | 'atm' | 'salvage' | 'activity' | 'robbery';
-  targetId: string;
-}
+export type { CharacterRig, NearbyPrompt };
 
 export class PlayerController implements GameModule {
   public readonly moduleId = 'spieler_steuerung';
@@ -143,110 +142,20 @@ export class PlayerController implements GameModule {
   }
 
   triggerWasted(cause = 'fatal_injury'): void {
-    const s = this.registry.state;
-    const eventId = `death_${s.activeCharacterId}_${Math.floor(this.registry.clock.gameTime * 10)}`;
-    if (s.gameOverState !== 'none' || s.lastDeathEventId === eventId) return;
-
-    s.lastDeathEventId = eventId;
-    s.gameOverState = 'wasted';
-    s.phoneOpen = false;
-    s.weaponWheelOpen = false;
-    this.registry.clock.setWeaponWheelSlowMo(false);
-    this.gfx.setGameOverPostFX('wasted');
-
-    const char = this.registry.getActiveCharacter();
-    // 10% cash fine capped at $5,000 (500,000 cents), never negative
-    const fineCents = Math.min(500000, Math.floor(char.cashCents * 0.1));
-    char.cashCents = Math.max(0, char.cashCents - fineCents);
-    char.inVehicleId = null;
-    s.wantedStars = 0;
-
-    // Weapon loss rule: drop illegal heavy/rifle reserve ammo on death
-    const inv = s.inventories[char.id];
-    for (const item of inv) {
-      if (item.weaponId === 'rpg_launcher' || item.weaponId === 'carbine_mk2') {
-        item.reserveAmmo = Math.floor(item.reserveAmmo * 0.5);
-      }
-    }
-
-    this.registry.events.emit('player:died', {
-      characterId: char.id,
-      location: { ...char.position },
-      cause,
-    });
-
-    this.registry.events.emit('economy:transactionCompleted', {
-      record: {
-        id: `tx_hospital_${Date.now()}`,
-        timestampGameSec: this.registry.clock.gameTime,
-        characterId: char.id,
-        account: 'cash',
-        amountCents: -fineCents,
-        balanceAfterCents: char.cashCents,
-        trigger: 'wasted_hospital_fee',
-        description: 'Vice City General Hospital Emergency Fee',
-      },
-    });
+    triggerPlayerWasted(this.registry, this.gfx, cause);
   }
 
   triggerBusted(): void {
-    const s = this.registry.state;
-    const eventId = `arrest_${s.activeCharacterId}_${Math.floor(this.registry.clock.gameTime * 10)}`;
-    if (s.gameOverState !== 'none' || s.lastArrestEventId === eventId) return;
-
-    s.lastArrestEventId = eventId;
-    s.gameOverState = 'busted';
-    s.phoneOpen = false;
-    s.weaponWheelOpen = false;
-    this.registry.clock.setWeaponWheelSlowMo(false);
-    this.gfx.setGameOverPostFX('busted');
-
-    const char = this.registry.getActiveCharacter();
-    const bailCents = Math.min(char.cashCents, 100000 + s.wantedStars * 75000);
-    char.cashCents = Math.max(0, char.cashCents - bailCents);
-    char.inVehicleId = null;
-    s.wantedStars = 0;
-    s.policeActiveUnits = 0;
-
-    // Impound illegal weapons & ammo
-    s.inventories[char.id] = s.inventories[char.id].filter((it) => it.weaponId === 'unarmed' || it.weaponId === 'pistol_9mm');
-    s.activeWeapons[char.id] = 'unarmed';
-
-    this.registry.events.emit('player:arrested', {
-      characterId: char.id,
-      location: { ...char.position },
-      bailCents,
-      respawnLocation: 'Leonida State Penitentiary',
-    });
+    triggerPlayerBusted(this.registry, this.gfx);
   }
 
   completeRespawn(): void {
-    const s = this.registry.state;
-    if (s.gameOverState === 'none') return;
-    const wasBusted = s.gameOverState === 'busted';
-    const char = this.registry.getActiveCharacter();
-
-    const respawnPos: Vec3 = wasBusted
-      ? { x: -275, y: 0.65, z: 215 } // Outside Leonida State Penitentiary
-      : { x: -145, y: 0.65, z: -155 }; // Outside Vice City General Hospital
-
-    char.position = respawnPos;
-    char.health = char.maxHealth;
-    char.oxygenCurrent = char.maxOxygen;
-    char.staminaCurrent = 100;
-    char.inInteriorId = null;
-    char.inVehicleId = null;
-    this.velocities[char.id].set(0, 0, 0);
-
-    s.gameOverState = 'none';
-    this.gfx.setGameOverPostFX('none');
-    this.syncRigFromState(char.id);
-
-    this.registry.events.emit('player:respawned', {
-      characterId: char.id,
-      hospitalPos: respawnPos,
-      fineCents: 0,
-    });
+    completePlayerRespawn(
+      this.registry,
+      this.gfx,
+      (id) => this.syncRigFromState(id),
+      (id) => this.velocities[id].set(0, 0, 0)
+    );
   }
 
   stepFromInput(input: InputActionState, simDt: number): void {
@@ -346,9 +255,9 @@ export class PlayerController implements GameModule {
       vel.y -= 18.5 * simDt;
     }
 
-    char.position.x = clamp(char.position.x + vel.x * simDt, -460, 260);
+    char.position.x = clamp(char.position.x + vel.x * simDt, -1680, 640);
     char.position.y += vel.y * simDt;
-    char.position.z = clamp(char.position.z + vel.z * simDt, -450, 420);
+    char.position.z = clamp(char.position.z + vel.z * simDt, -1480, 1420);
 
     const newGroundY = this.world.getTerrainHeight(char.position.x, char.position.z);
     if (char.position.y <= newGroundY && waterEval.state === 'land') {
@@ -366,85 +275,16 @@ export class PlayerController implements GameModule {
     }
 
     this.syncRigFromState(char.id);
-    this.updateNearbyPrompt(char.position, input);
+    this.currentPrompt = evaluateNearbyPrompt(
+      this.registry,
+      this.water,
+      char.position,
+      input,
+      (id) => this.syncRigFromState(id),
+      this.onRequestAtmUI,
+      this.onRequestActivityUI
+    );
     this.updateCameraFollow(char.position, input.aimHeld, simDt);
-  }
-
-  private updateNearbyPrompt(pos: Vec3, input: InputActionState): void {
-    const char = this.registry.getActiveCharacter();
-    this.currentPrompt = null;
-
-    // 1. Exit interior
-    if (char.inInteriorId) {
-      const interior = ENTERABLE_INTERIORS.find((i) => i.id === char.inInteriorId);
-      if (interior && Math.hypot(pos.x - interior.interiorCenter.x, pos.z - interior.interiorCenter.z) < 12) {
-        this.currentPrompt = { key: 'hud.interact.exitInterior', action: 'exit_interior', targetId: interior.id };
-        if (input.interactPressed) {
-          char.inInteriorId = null;
-          char.position = { ...interior.exitPos };
-          this.syncRigFromState(char.id);
-          return;
-        }
-      }
-    }
-
-    // 2. Enter interior
-    for (const interior of ENTERABLE_INTERIORS) {
-      if (Math.hypot(pos.x - interior.entrancePos.x, pos.z - interior.entrancePos.z) < 4.5) {
-        this.currentPrompt = {
-          key: 'hud.interact.enterInterior',
-          params: { name: interior.name },
-          action: 'interior',
-          targetId: interior.id,
-        };
-        if (input.interactPressed) {
-          char.inInteriorId = interior.id;
-          char.position = { ...interior.interiorCenter };
-          this.syncRigFromState(char.id);
-          return;
-        }
-      }
-    }
-
-    // 3. Salvage diving sites
-    for (const site of this.water.salvageSites) {
-      if (this.registry.state.collectedSalvageIds.has(site.id)) continue;
-      if (Math.hypot(pos.x - site.position.x, pos.y - site.position.y, pos.z - site.position.z) < 4.5) {
-        this.currentPrompt = {
-          key: 'hud.interact.salvage',
-          params: { name: site.name },
-          action: 'salvage',
-          targetId: site.id,
-        };
-        if (input.interactPressed) {
-          this.water.collectSalvage(site.id);
-          return;
-        }
-      }
-    }
-
-    // 4. ATMs
-    for (const atm of ATM_POINTS) {
-      if (Math.hypot(pos.x - atm.position.x, pos.z - atm.position.z) < 3.5) {
-        this.currentPrompt = { key: 'hud.interact.atm', action: 'atm', targetId: atm.id };
-        if (input.interactPressed) {
-          this.onRequestAtmUI?.();
-          return;
-        }
-      }
-    }
-
-    // 5. Activities, Tuning & Wardrobe
-    for (const act of ACTIVITY_SPOTS) {
-      if (Math.hypot(pos.x - act.position.x, pos.z - act.position.z) < 4.5) {
-        const key = act.kind === 'tuning' ? 'hud.interact.tuning' : act.kind === 'wardrobe' ? 'hud.interact.wardrobe' : 'hud.interact.activity';
-        this.currentPrompt = { key, params: { name: act.name }, action: 'activity', targetId: act.id };
-        if (input.interactPressed) {
-          this.onRequestActivityUI?.(act.kind, act.id);
-          return;
-        }
-      }
-    }
   }
 
   public updateCameraFollow(targetPos: Vec3, aiming: boolean, renderDt: number, vehicleOffset = 0): void {

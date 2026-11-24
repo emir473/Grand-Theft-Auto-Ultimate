@@ -4,6 +4,7 @@
  */
 
 import type { RoadEdge, RoadNode, RoadType, Vec3 } from '../core/types';
+import { LEONIDA_ROAD_CORRIDORS, posterUVToWorld } from './leonidaGeoData';
 
 export interface RouteResult {
   found: boolean;
@@ -64,36 +65,34 @@ export class RoadNetwork {
   }
 
   private buildLeonidaNetwork(): void {
-    // Star Island & Causeway (starting hub around (0, 0))
-    this.addNode({ id: 'star_villa_gate', x: 0, y: 0.5, z: -28, kind: 'intersection', name: 'Star Island Villa Gate' });
+    // Starfish Island & Admiral Causeway (starting hub around (0, 0))
+    this.addNode({ id: 'star_villa_gate', x: 0, y: 0.5, z: -28, kind: 'intersection', name: 'Starfish Island Gate' });
     this.addNode({ id: 'star_east_loop', x: 55, y: 0.5, z: -28, kind: 'waypoint' });
-    this.addNode({ id: 'star_bridge_east', x: 110, y: 1.5, z: -28, kind: 'intersection', name: 'Vice Beach Causeway' });
-    this.addNode({ id: 'star_bridge_west', x: -95, y: 1.5, z: -28, kind: 'intersection', name: 'Downtown Causeway' });
+    this.addNode({ id: 'star_bridge_east', x: 110, y: 1.5, z: -28, kind: 'intersection', name: 'Admiral Causeway East' });
+    this.addNode({ id: 'star_bridge_west', x: -95, y: 1.5, z: -28, kind: 'intersection', name: 'Admiral Causeway West' });
 
-    // Vice Beach / Ocean Drive (East Side, x ~ 150)
+    // Vice Beach / Ocean Beach / Washington Beach (East Side, x ~ 165)
     this.addNode({ id: 'ocean_south', x: 165, y: 0.5, z: -160, kind: 'stop', name: 'Ocean Beach South' });
-    this.addNode({ id: 'ocean_mid', x: 165, y: 0.5, z: -28, kind: 'intersection', name: 'Ocean Drive & Causeway' });
-    this.addNode({ id: 'ocean_club', x: 165, y: 0.5, z: 95, kind: 'stop', name: 'Malibu Nightclub' });
-    this.addNode({ id: 'ocean_north', x: 165, y: 0.5, z: 220, kind: 'intersection', name: 'North Beach' });
+    this.addNode({ id: 'ocean_mid', x: 165, y: 0.5, z: -28, kind: 'intersection', name: 'Ocean Beach & Causeway' });
+    this.addNode({ id: 'ocean_club', x: 165, y: 0.5, z: 95, kind: 'stop', name: 'Washington Beach Blvd' });
+    this.addNode({ id: 'ocean_north', x: 165, y: 0.5, z: 220, kind: 'intersection', name: 'Leaf Links Causeway' });
 
-    // Downtown Vice City (West Side, x ~ -140 to -280)
-    this.addNode({ id: 'dt_east', x: -140, y: 0.5, z: -28, kind: 'intersection', name: 'Biscayne Blvd' });
-    this.addNode({ id: 'dt_bank', x: -140, y: 0.5, z: 95, kind: 'stop', name: 'Vice City Bank & Plaza' });
+    // Downtown Vice City (West Side, x ~ -140 to -240)
+    this.addNode({ id: 'dt_east', x: -140, y: 0.5, z: -28, kind: 'intersection', name: 'Downtown Waterfront' });
+    this.addNode({ id: 'dt_bank', x: -140, y: 0.5, z: 95, kind: 'stop', name: 'Bayside Plaza' });
     this.addNode({ id: 'dt_hospital', x: -140, y: 0.5, z: -155, kind: 'stop', name: 'Vice City General Hospital' });
-    this.addNode({ id: 'dt_ammu', x: -240, y: 0.5, z: -28, kind: 'intersection', name: 'Downtown Ammu-Nation' });
-    this.addNode({ id: 'dt_north', x: -140, y: 0.5, z: 220, kind: 'intersection', name: 'Downtown North Express' });
+    this.addNode({ id: 'dt_ammu', x: -240, y: 0.5, z: -28, kind: 'intersection', name: 'Little Cuba & Crosstown' });
+    this.addNode({ id: 'dt_north', x: -140, y: 0.5, z: 220, kind: 'intersection', name: 'I-97 North Interchange' });
 
-    // Expressways & VCIA Airport (South-West, x ~ -260, z ~ -280)
-    this.addNode({ id: 'vcia_entry', x: -240, y: 0.5, z: -155, kind: 'intersection', name: 'VCIA Airport Entry' });
-    this.addNode({ id: 'vcia_terminal', x: -240, y: 0.5, z: -290, kind: 'stop', name: 'VCIA Terminal' });
+    // Expressways & VCIA Airport
+    this.addNode({ id: 'vcia_entry', x: -240, y: 0.5, z: -155, kind: 'intersection', name: 'VCI Airport Entry' });
+    this.addNode({ id: 'vcia_terminal', x: -240, y: 0.5, z: -290, kind: 'stop', name: 'VCI Airport Terminal' });
+    this.addNode({ id: 'swamp_east', x: -140, y: 0.5, z: 320, kind: 'intersection', name: 'Stockyard North' });
+    this.addNode({ id: 'prison_gate', x: -280, y: 0.5, z: 220, kind: 'stop', name: 'Rockridge Westbound' });
+    this.addNode({ id: 'zancudo_gate', x: -340, y: 0.5, z: 95, kind: 'gate', name: 'Balsero Highway Junction' });
+    this.addNode({ id: 'gellhorn_port', x: -340, y: 0.5, z: -155, kind: 'harbor', name: 'Salton Express Ramp' });
 
-    // Grassrivers Swamp & Fort Zancudo / Prison (North & Far West)
-    this.addNode({ id: 'swamp_east', x: -140, y: 0.5, z: 320, kind: 'intersection', name: 'Grassrivers Overpass' });
-    this.addNode({ id: 'prison_gate', x: -280, y: 0.5, z: 220, kind: 'stop', name: 'Leonida State Penitentiary' });
-    this.addNode({ id: 'zancudo_gate', x: -340, y: 0.5, z: 95, kind: 'gate', name: 'Fort Zancudo Checkpoint' });
-    this.addNode({ id: 'gellhorn_port', x: -340, y: 0.5, z: -155, kind: 'harbor', name: 'Port Gellhorn Naval Base' });
-
-    // Drivable road edges
+    // Drivable starter city road edges
     this.addEdge('r_star_1', 'star_villa_gate', 'star_east_loop', 'street', 16);
     this.addEdge('r_star_2', 'star_east_loop', 'star_bridge_east', 'avenue', 22);
     this.addEdge('r_star_3', 'star_bridge_east', 'ocean_mid', 'avenue', 24);
@@ -121,8 +120,47 @@ export class RoadNetwork {
     this.addEdge('r_port_1', 'vcia_entry', 'gellhorn_port', 'highway', 28);
     this.addEdge('r_port_2', 'gellhorn_port', 'zancudo_gate', 'highway', 28);
 
+    // Canonical State-Wide Highways from Official Leonida Map (IMG_8682 & IMG_8384)
+    for (const corridor of LEONIDA_ROAD_CORRIDORS) {
+      let prevId: string | null = null;
+      corridor.points.forEach((pt, idx) => {
+        const xz = posterUVToWorld(pt.u, pt.v);
+        const nodeId = `geo_${corridor.id}_${idx}`;
+        this.addNode({
+          id: nodeId,
+          x: xz.x,
+          y: 0.7,
+          z: xz.z,
+          kind: idx === 0 || idx === corridor.points.length - 1 ? 'intersection' : 'waypoint',
+          name: `${corridor.label} (${idx + 1})`,
+        });
+        if (prevId) {
+          this.addEdge(
+            `edge_${corridor.id}_${idx}`,
+            prevId,
+            nodeId,
+            corridor.routeClass === 'rail' ? 'rail' : 'highway',
+            corridor.speedLimitMps,
+            corridor.lanes
+          );
+        }
+        prevId = nodeId;
+      });
+    }
+
+    // Link canonical state corridors into Downtown & Southside nodes so A* routes state-wide seamlessly
+    this.addEdge('link_i97_dt', 'dt_north', 'geo_i_97_3', 'highway', 32);
+    this.addEdge('link_i404_dt', 'dt_east', 'geo_i_404_6', 'highway', 32);
+    this.addEdge('link_i397_dt', 'dt_hospital', 'geo_i_397_0', 'highway', 30);
+    this.addEdge('link_us35_vcia', 'gellhorn_port', 'geo_us_35_3', 'highway', 28);
+    this.addEdge('link_sr1a_i97', 'geo_i_97_6', 'geo_sr_1a_0', 'highway', 30);
+    this.addEdge('link_us82_us35', 'geo_us_82_3', 'geo_us_35_5', 'highway', 28);
+    this.addEdge('link_us183_i404', 'geo_i_404_2', 'geo_us_183_2', 'highway', 28);
+    this.addEdge('link_i297_us35', 'geo_i_297_2', 'geo_us_35_0', 'highway', 32);
+    this.addEdge('link_i297_i97', 'geo_i_297_4', 'geo_i_97_0', 'highway', 32);
+
     // Vice Metro elevated subway rail loop
-    this.addNode({ id: 'metro_ocean', x: 180, y: 8, z: -28, kind: 'station', name: 'Ocean Drive Station' });
+    this.addNode({ id: 'metro_ocean', x: 180, y: 8, z: -28, kind: 'station', name: 'Ocean Beach Station' });
     this.addNode({ id: 'metro_downtown', x: -125, y: 8, z: 95, kind: 'station', name: 'Downtown Plaza Station' });
     this.addNode({ id: 'metro_hospital', x: -125, y: 8, z: -155, kind: 'station', name: 'Hospital Station' });
     this.addNode({ id: 'metro_vcia', x: -255, y: 8, z: -280, kind: 'station', name: 'VCIA Airport Station' });

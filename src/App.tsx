@@ -10,6 +10,7 @@ import { DevConsole } from './ui/DevConsole';
 import { GameOverOverlay } from './ui/GameOverOverlay';
 import { ActivityOverlay } from './ui/ActivityOverlay';
 import { TouchControls } from './ui/TouchControls';
+import { WorldMapOverlay } from './ui/WorldMapOverlay';
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,6 +29,7 @@ export default function App() {
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [wheelOpen, setWheelOpen] = useState(false);
   const [pauseOpen, setPauseOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [activityMode, setActivityMode] = useState<string | null>(null);
   const [minimapRotate, setMinimapRotate] = useState(true);
@@ -154,6 +156,7 @@ export default function App() {
               setMinimapRotate(next);
               runtime.registry.state.minimapRotate = next;
             }}
+            onOpenWorldMap={() => setMapOpen(true)}
             onOpenPhone={() => {
               const next = !phoneOpen;
               setPhoneOpen(next);
@@ -227,6 +230,21 @@ export default function App() {
                 runtime.registry.clock.setPaused(false);
               }}
               onRefresh={() => setHud(runtime.getHudSnapshot())}
+              onOpenWorldMap={() => {
+                setPauseOpen(false);
+                runtime.registry.state.pauseMenuOpen = false;
+                runtime.registry.clock.setPaused(false);
+                setMapOpen(true);
+              }}
+            />
+          )}
+
+          {mapOpen && (
+            <WorldMapOverlay
+              runtime={runtime}
+              hud={hud}
+              onClose={() => setMapOpen(false)}
+              onRefreshHud={() => setHud(runtime.getHudSnapshot())}
             />
           )}
 

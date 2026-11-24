@@ -28,28 +28,16 @@ import {
   INITIAL_FLEET_SPECS,
   type VehicleHandlingProfile,
 } from './vehicleModels';
+import {
+  applyVehicleImpactDamage,
+  applyVehicleTuningVisuals,
+  repairVehicleRuntime,
+  stepDetachedDebris,
+  type DetachedDebrisPart,
+  type VehicleRuntime,
+} from './vehicleDamage';
 
-export type { VehicleHandlingProfile };
-
-export interface VehicleRuntime {
-  data: VehicleStateData;
-  profile: VehicleHandlingProfile;
-  root: TransformNode;
-  chassis: Mesh;
-  hood: Mesh;
-  bodyMat: PBRMaterial;
-  wheels: Mesh[];
-  velocity: Vector3;
-  angularVelY: number;
-  steerAngle: number;
-  rpm: number;
-  gear: number;
-  wheelRoll: number;
-  pitchAngle: number;
-  rollAngle: number;
-  isHydroplaning: boolean;
-  cockpitView: boolean;
-}
+export type { VehicleHandlingProfile, VehicleRuntime };
 
 export class VehiclePhysicsSystem implements GameModule {
   public readonly moduleId = 'fahrzeug_physik';
@@ -63,7 +51,7 @@ export class VehiclePhysicsSystem implements GameModule {
   private scene!: Scene;
 
   public runtimes = new Map<string, VehicleRuntime>();
-  private detachedParts: Array<{ mesh: Mesh; vel: Vector3; lifeSec: number }> = [];
+  private detachedParts: DetachedDebrisPart[] = [];
 
   validateDependencies(registry: GameRegistry): void {
     this.registry = registry;
@@ -176,20 +164,12 @@ export class VehiclePhysicsSystem implements GameModule {
 
   applyTuningChange(vehicleId: string): void {
     const rt = this.runtimes.get(vehicleId);
-    if (!rt) return;
-    rt.bodyMat.albedoColor = Color3.FromHexString(rt.data.tuning.primaryColorHex);
-    rt.bodyMat.metallic = rt.data.tuning.metallic;
+    if (rt) applyVehicleTuningVisuals(rt);
   }
 
   repairVehicle(vehicleId: string, costCents = 0): void {
     const rt = this.runtimes.get(vehicleId);
-    if (!rt) return;
-    rt.data.damage = { front: 0, rear: 0, left: 0, right: 0, engine: 0, detachedParts: [] };
-    rt.data.fuelLiters = rt.data.maxFuelLiters;
-    rt.data.fuelLeakRate = 0;
-    rt.hood.isVisible = true;
-    rt.chassis.scaling.set(1, 1, 1);
-    this.registry.events.emit('vehicle:repaired', { vehicleId, costCents });
+    if (rt) repairVehicleRuntime(rt, this.registry, costCents);
   }
 
   tryEnterNearestVehicle(): boolean {
@@ -261,23 +241,7 @@ export class VehiclePhysicsSystem implements GameModule {
   }
 
   applyImpactDamage(rt: VehicleRuntime, impactEnergy: number, zone: 'front' | 'rear' | 'left' | 'right'): void {
-    const norm = clamp(impactEnergy / 120000, 0.05, 0.55);
-    rt.data.damage[zone] = clamp(rt.data.damage[zone] + norm, 0, 1);
-    rt.data.damage.engine = clamp(rt.data.damage.engine + norm * 0.45, 0, 1);
-    if (zone === 'front' && rt.data.damage.front > 0.45 && rt.hood.isVisible) {
-      rt.hood.isVisible = false;
-      rt.data.damage.detachedParts.push('hood');
-      const debris = MeshBuilder.CreateBox(`debris_${Date.now()}`, { width: rt.profile.width * 0.8, height: 0.1, depth: 1.1 }, this.scene);
-      debris.position.set(rt.data.position.x, rt.data.position.y + 1.6, rt.data.position.z);
-      debris.material = rt.bodyMat;
-      this.detachedParts.push({ mesh: debris, vel: new Vector3((Math.random() - 0.5) * 6, 6, (Math.random() - 0.5) * 6), lifeSec: 8 });
-    }
-    if (rt.data.damage.engine > 0.65) {
-      rt.data.fuelLeakRate = 0.25;
-    }
-    // Controlled chassis compression
-    rt.chassis.scaling.z = 1 - (rt.data.damage.front + rt.data.damage.rear) * 0.08;
-    this.registry.events.emit('vehicle:damaged', { vehicleId: rt.data.id, impactEnergy, zone });
+    applyVehicleImpactDamage(rt, this.scene, this.registry, this.detachedParts, impactEnergy, zone);
   }
 
   stepPlayerVehicleInput(input: InputActionState, fixedDt: number): void {
@@ -359,9 +323,9 @@ export class VehiclePhysicsSystem implements GameModule {
     const yawRate = (nextForward / Math.max(2.2, p.length * 0.65)) * Math.tan(rt.steerAngle) * clamp(effectiveGrip, 0.4, 1.2);
     d.yaw += yawRate * dt;
 
-    // Integrate position & ground suspension
-    d.position.x = clamp(d.position.x + rt.velocity.x * dt, -460, 260);
-    d.position.z = clamp(d.position.z + rt.velocity.z * dt, -450, 420);
+    // Integrate position & ground suspension across full Leonida world
+    d.position.x = clamp(d.position.x + rt.velocity.x * dt, -1680, 640);
+    d.position.z = clamp(d.position.z + rt.velocity.z * dt, -1480, 1420);
     const groundY = this.world.getTerrainHeight(d.position.x, d.position.z);
     d.position.y = groundY + 0.08 + d.tuning.suspensionHeightOffset;
 
@@ -413,21 +377,7 @@ export class VehiclePhysicsSystem implements GameModule {
   }
 
   fixedUpdate(fixedDt: number): void {
-    // Update detached debris parts
-    for (let i = this.detachedParts.length - 1; i >= 0; i--) {
-      const part = this.detachedParts[i];
-      part.lifeSec -= fixedDt;
-      part.vel.y -= 9.81 * fixedDt;
-      part.mesh.position.addInPlace(part.vel.scale(fixedDt));
-      if (part.mesh.position.y < 0.6) {
-        part.mesh.position.y = 0.6;
-        part.vel.scaleInPlace(0.4);
-      }
-      if (part.lifeSec <= 0) {
-        part.mesh.dispose();
-        this.detachedParts.splice(i, 1);
-      }
-    }
+    stepDetachedDebris(this.detachedParts, fixedDt);
   }
 
   update(_simDt: number, renderDt: number): void {

@@ -7,9 +7,10 @@ interface PauseMenuProps {
   runtime: GameRuntime;
   onResume: () => void;
   onRefresh: () => void;
+  onOpenWorldMap?: () => void;
 }
 
-export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefresh }) => {
+export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefresh, onOpenWorldMap }) => {
   const s = runtime.registry.state;
   const [statusMsg, setStatusMsg] = useState('');
 
@@ -113,6 +114,15 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({ runtime, onResume, onRefre
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-2">
+          {onOpenWorldMap && (
+            <button
+              type="button"
+              onClick={onOpenWorldMap}
+              className="col-span-2 py-2 rounded-lg bg-amber-500/90 hover:bg-amber-400 text-neutral-950 text-xs font-bold cursor-pointer"
+            >
+              Open Full Leonida Map
+            </button>
+          )}
           <button
             type="button"
             onClick={handleSave}

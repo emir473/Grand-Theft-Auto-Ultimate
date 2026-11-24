@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, ShieldAlert, Pause, Terminal, Disc, Users, Video, Volume2, VolumeX } from 'lucide-react';
+import { Phone, ShieldAlert, Pause, Terminal, Disc, Users, Video, Volume2, VolumeX, Map as MapIcon } from 'lucide-react';
 import type { GameRuntime, HudSnapshot } from '../core/gameRuntime';
 import { formatMoney } from '../core/types';
 import { i18n } from './localization';
@@ -11,6 +11,7 @@ interface HudOverlayProps {
   minimapRotate: boolean;
   muted: boolean;
   onToggleMinimapRotate: () => void;
+  onOpenWorldMap: () => void;
   onOpenPhone: () => void;
   onOpenWeaponWheel: () => void;
   onOpenPause: () => void;
@@ -27,6 +28,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   minimapRotate,
   muted,
   onToggleMinimapRotate,
+  onOpenWorldMap,
   onOpenPhone,
   onOpenWeaponWheel,
   onOpenPause,
@@ -102,6 +104,15 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             >
               <Users className="w-3.5 h-3.5 text-amber-400" />
               <span>Switch (K)</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenWorldMap}
+              title="Leonida World Map"
+              className="px-2.5 py-1.5 rounded-md bg-neutral-900/90 hover:bg-neutral-800 border border-white/15 text-xs font-medium text-neutral-100 flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            >
+              <MapIcon className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Map</span>
             </button>
             <button
               type="button"
@@ -184,7 +195,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             </div>
           )}
 
-          <Minimap runtime={runtime} hud={hud} rotate={minimapRotate} onToggleRotate={onToggleMinimapRotate} />
+          <Minimap runtime={runtime} hud={hud} rotate={minimapRotate} onToggleRotate={onToggleMinimapRotate} onOpenWorldMap={onOpenWorldMap} />
 
           {/* Vitals Bars */}
           <div className="w-48 sm:w-56 bg-neutral-950/85 border border-white/10 rounded-md p-2 flex flex-col gap-1.5">
