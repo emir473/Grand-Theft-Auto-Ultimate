@@ -20,13 +20,19 @@
 - **1P Cockpit Steering Hands, Utility Traffic Silhouettes & Spinning Wheels (`src/gameplay/vehicleCockpit.ts`, `src/gameplay/vehicleUtilitySculptor.ts`, `src/gameplay/vehicleSculptor.ts`, `src/gameplay/vehiclePhysics.ts`, `src/ai/trafficAI.ts`)**: Added driver-seat 1P camera with 5-finger steering-wheel hands and backlit gauge cluster, ribbed Lathe Cement Mixer drum & US National Mail cargo step-vans (`IMG_8170`), wheel-well arches, and 24-unit road traffic with spinning wheels and active signal brake lights.
 - **Layered Procedural Particle VFX (`src/rendering/vfxParticles.ts`, `src/core/gameRuntime.ts`)**: Added Canvas-alpha `ParticleSystem` trails for asphalt/sand/mud tire drift plumes, engine damage smoke/fire plumes, and marine wake spray behind boats/jetski.
 
-## Honest Progress Audit (End of Round 6)
-- **Feature Scope**: ~65% implemented & integrated (+5% conservative increment this round).
-- **Photorealism / Visual Detail vs Reference Images**: ~49% achieved (+5% conservative increment this round).
-- **Remaining Work Queue (Round 7+)**:
-  1. Procedural atmospheric clouds (`IMG_8168`/`IMG_8172`), subtle god-ray/sun-glare bloom tuning, and multi-layer road puddle/grime surface variation.
-  2. Light-toned street minimap mode matching `IMG_8170`, richer Vice City block density (Little Cuba, Stockyard, Bayside, Keys islands), and pedestrian/vehicle collision reactions.
-  3. Additional story/heist missions, dynamic wanted-level SWAT/helicopter pursuit, and full live headless WebGL/browser screenshot verification + frame-time profiling.
+## Round 7 Completed Systems (Every Source File Strictly < 450 Lines)
+- **Sculpted VCPD Cruisers, SWAT Enforcers, Searchlight Helicopter & Salvage Wrecks (`src/ai/policeForensics.ts`, `src/world/waterDiving.ts`)**: Replaced remaining boxy `CreateBox` pursuit cruisers, helicopter, and sunken salvage sites with curved lofted `police` cruisers, 4-star `truck` SWAT units, spinning-rotor helicopter with live `SpotLight` searchlight cone, sculpted sunken yacht hull / plane wreck / briefcase salvage rigs, and animated ocean/pool water caustics.
+- **Vice City Dusk Atmosphere, Dual-Layer Clouds, Sun God-Rays & Road Wear (`src/rendering/shaders.ts`, `src/world/weatherSystem.ts`, `src/rendering/engineGrafik.ts`, `src/world/roadMarkings.ts`)**: Added `IMG_8169` magenta-violet evening twilight gradients, 2-layer tropical cumulus/cirrus cloud shader, hardware-safe `VolumetricLightScatteringPostProcess` sun shafts on High/Ultra, and asphalt wear patches / tire skids / storm grates.
+- **Overseas Keys Bridges, Vice City District Infill & Art Deco Lifeguard Fin (`src/world/viceDistrictsAndKeys.ts`, `src/world/districtBuilders.ts`)**: Built `SR-1A` concrete bridges linking Corsair Key -> Shoeless Keys -> Key Lento (with lighthouse beacon) -> Mile Zero, plus Little Cuba awnings, Bayside mid-rises, Stockyard bays, Leaf Links greens/bunkers, and `IMG_8168` curved shark-fin lifeguard canopy.
+- **Light-Toned Street Minimap (`IMG_8170`) & Greater Leonida Missions (`src/ui/Minimap.tsx`, `src/gameplay/missionContent.ts`, `src/gameplay/activitiesMissions.ts`)**: Added `STR / SAT` toggle defaulting to the `IMG_8170` light street-map style with cased white streets, 3 new multi-stage regional missions, and scheduled hourly Dynamic World Events.
+
+## Honest Progress Audit (End of Round 7)
+- **Feature Scope**: ~70% implemented & integrated (+5% conservative increment this round).
+- **Photorealism / Visual Detail vs Reference Images**: ~54% achieved (+5% conservative increment this round).
+- **Remaining Work Queue (Round 8+)**:
+  1. Live headless WebGL/browser visual screenshot inspection against all 7 reference images (`IMG_8168`–`IMG_8172`, `IMG_8682`, `IMG_8384`) and render-cost profiling.
+  2. Additional walkable interior shops (Pawn & Gun Shop, Little Cuba Café, Bayside Garage bays), interactive NPC voice/dialogue encounters, and pedestrian collision reactions.
+  3. Ambient beach/swamp bird & insect life, dynamic neon club laser beams, and expanded Kelly County / Leonard County highway signage.
 
 ## GitHub Status
 No GitHub remote or push credentials exist in this workspace; all updates are maintained locally.

@@ -4,10 +4,15 @@
  */
 
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
-import type { MissionState, VehicleTuning } from '../core/types';
+import type { VehicleTuning } from '../core/types';
 import { clamp } from '../core/types';
 import type { VehiclePhysicsSystem } from './vehiclePhysics';
 import type { PlayerController } from './playerController';
+import {
+  createInitialMissions,
+  DYNAMIC_WORLD_EVENTS,
+  getMissionStage2Target,
+} from './missionContent';
 
 export interface ActivityResult {
   activity: string;
@@ -22,6 +27,7 @@ export class ActivitiesMissionsSystem implements GameModule {
 
   private registry!: GameRegistry;
   private vehicles!: VehiclePhysicsSystem;
+  private triggeredEvents = new Set<string>();
 
   validateDependencies(registry: GameRegistry): void {
     this.registry = registry;
@@ -33,36 +39,7 @@ export class ActivitiesMissionsSystem implements GameModule {
     if (this.readiness === 'initialized' || this.readiness === 'running') return;
     const mMap = this.registry.state.missions;
     if (mMap.size === 0) {
-      const defaults: MissionState[] = [
-        {
-          id: 'mission_vice_welcome',
-          titleKey: 'Vice Welcome: Ocean Drive Run',
-          descriptionKey: 'Drive from Star Island Villa to Ocean Drive & Club Malibu.',
-          status: 'available',
-          stageIndex: 0,
-          targetPosition: { x: 165, y: 1, z: 95 },
-          rewardCents: 250000, // $2,500
-        },
-        {
-          id: 'mission_banco_heist',
-          titleKey: 'Banco de Leonida Score',
-          descriptionKey: 'Infiltrate Banco de Leonida, hack the vault terminal, and escape police.',
-          status: 'available',
-          stageIndex: 0,
-          targetPosition: { x: -155, y: 1, z: 95 },
-          rewardCents: 2500000, // $25,000
-        },
-        {
-          id: 'mission_deep_salvage',
-          titleKey: 'Smuggler Wreck Recovery',
-          descriptionKey: 'Dive off Star Island coast and recover the sunken smuggler yacht crate.',
-          status: 'available',
-          stageIndex: 0,
-          targetPosition: { x: 82, y: -5.5, z: 45 },
-          rewardCents: 400000, // $4,000
-        },
-      ];
-      for (const m of defaults) mMap.set(m.id, m);
+      for (const m of createInitialMissions()) mMap.set(m.id, m);
     }
     this.readiness = 'initialized';
   }
@@ -78,6 +55,12 @@ export class ActivitiesMissionsSystem implements GameModule {
     } else if (m.id === 'mission_banco_heist') {
       m.targetPosition = { x: -155, y: 1, z: 95 };
       m.descriptionKey = 'Stage 1/2: Approach Banco de Leonida main entrance.';
+    } else if (m.id === 'mission_allied_convoy') {
+      m.descriptionKey = 'Stage 1/2: Collect Allied Crystal refinery manifest near Ambrosia.';
+    } else if (m.id === 'mission_keys_intercept') {
+      m.descriptionKey = 'Stage 1/2: Drive SR-1A Overseas Keys to Key Lento Lighthouse pier.';
+    } else if (m.id === 'mission_gellhorn_smuggler') {
+      m.descriptionKey = 'Stage 1/2: Meet informant at Port Gellhorn Docks.';
     }
     if (m.targetPosition) {
       this.registry.state.gpsDestination = {
@@ -237,6 +220,24 @@ export class ActivitiesMissionsSystem implements GameModule {
   }
 
   update(): void {
+    const hour = Math.floor(this.registry.clock.dayTimeHours);
+    for (const evt of DYNAMIC_WORLD_EVENTS) {
+      if (hour === evt.triggerHour && !this.triggeredEvents.has(evt.id)) {
+        this.triggeredEvents.add(evt.id);
+        this.registry.state.socialFeed.unshift({
+          id: `${evt.id}_${Date.now()}`,
+          authorName: evt.authorHandle,
+          isNpc: true,
+          caption: `${evt.title}: ${evt.caption}`,
+          eventTag: 'world_event',
+          likes: 340,
+          reach: 12000,
+          timestampGameSec: this.registry.clock.gameTime,
+          location: { ...evt.location },
+        });
+      }
+    }
+
     const char = this.registry.getActiveCharacter();
     for (const m of this.registry.state.missions.values()) {
       if (m.status !== 'active' || !m.targetPosition) continue;
@@ -245,18 +246,16 @@ export class ActivitiesMissionsSystem implements GameModule {
         continue;
       }
       const d = Math.hypot(char.position.x - m.targetPosition.x, char.position.z - m.targetPosition.z);
-      if (d < 8) {
-        if (m.id === 'mission_vice_welcome' && m.stageIndex === 1) {
+      if (d < 9) {
+        const s2 = m.stageIndex === 1 ? getMissionStage2Target(m.id) : null;
+        if (s2) {
           m.stageIndex = 2;
-          m.targetPosition = { x: 165, y: 1, z: 95 };
-          m.descriptionKey = 'Stage 2/2: Meet at Club Malibu Vice Beach.';
-          this.registry.state.gpsDestination = { ...m.targetPosition, label: `${m.titleKey} (2/2)` };
-        } else if (m.id === 'mission_banco_heist' && m.stageIndex === 1) {
-          m.stageIndex = 2;
-          m.targetPosition = { x: 0, y: 1, z: -6 };
-          m.descriptionKey = 'Stage 2/2: Return stolen bonds to Star Island Villa!';
-          this.registry.state.wantedStars = Math.max(this.registry.state.wantedStars, 2);
-          this.registry.state.gpsDestination = { ...m.targetPosition, label: `${m.titleKey} (Escape)` };
+          m.targetPosition = { ...s2.pos };
+          m.descriptionKey = s2.desc;
+          if (s2.wanted) {
+            this.registry.state.wantedStars = Math.max(this.registry.state.wantedStars, s2.wanted);
+          }
+          this.registry.state.gpsDestination = { ...m.targetPosition, label: s2.label };
         } else {
           this.completeMission(m.id);
         }

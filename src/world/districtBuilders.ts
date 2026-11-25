@@ -20,6 +20,11 @@ import {
 import { buildDowntownMonorailAndOverpass } from './downtownInfra';
 import { buildCausewayBridgesAndBoardwalk, buildDowntownSignageAndArena } from './signageAndLandmarks';
 import { buildGreaterLeonidaBiomeProps, buildVCPortAndVCIADetails } from './regionalLandmarks';
+import {
+  buildArtDecoLifeguardFin,
+  buildOverseasKeysAndBridges,
+  buildViceDistrictInfill,
+} from './viceDistrictsAndKeys';
 
 export type DistrictMatMap = Record<string, PBRMaterial>;
 
@@ -120,9 +125,10 @@ export function buildViceBeachChunk(
     makeBox(scene, gfx, `beachPole_${i}`, 0.08, 2.2, 0.08, x, 1.4, z, mats.travertine, root, false);
     makeBox(scene, gfx, `beachLounger_${i}`, 0.85, 0.28, 2.0, x - 1.3, 0.75, z, mats.stucco, root, false);
   }
-  // Lifeguard tower
+  // Lifeguard tower + IMG_8168 curved yellow/green Art Deco fin canopy
   makeBox(scene, gfx, 'lifeguard_deck', 4.2, 2.4, 4.2, 232, 1.6, 12, mats.travertine, root);
   makeBox(scene, gfx, 'lifeguard_cabin', 3.4, 2.4, 3.4, 232, 3.8, 12, mats.neon_cyan, root);
+  buildArtDecoLifeguardFin(scene, gfx, 232, 12, root);
 
   for (const interior of ENTERABLE_INTERIORS.filter((x) => x.kind === 'nightclub' || x.kind === 'clothing')) {
     makeBox(scene, gfx, `shell_${interior.id}`, interior.size.w, interior.size.h, interior.size.d, interior.interiorCenter.x, interior.size.h / 2 + 0.5, interior.interiorCenter.z, mats.stucco, root);
@@ -180,6 +186,7 @@ export function buildDowntownAndPortChunk(
   }
   buildDowntownMonorailAndOverpass(scene, gfx, mats.concrete, mats.asphalt, mats.neon_cyan, root);
   buildDowntownSignageAndArena(scene, gfx, mats.concrete, mats.stucco, mats.neon_coral, mats.neon_cyan, root);
+  buildViceDistrictInfill(scene, gfx, mats.concrete, mats.stucco, mats.neon_coral, mats.neon_cyan, spatialGrid, root);
   return root;
 }
 
@@ -232,6 +239,7 @@ export function buildStateRegionsChunks(
 
   buildVCPortAndVCIADetails(scene, gfx, mats.concrete, mats.stucco, mats.neon_cyan, vciaRoot);
   buildGreaterLeonidaBiomeProps(scene, gfx, mats.concrete, stateRoot);
+  buildOverseasKeysAndBridges(scene, gfx, mats.concrete, mats.asphalt, mats.neon_cyan, stateRoot);
 
   return [vciaRoot, stateRoot];
 }

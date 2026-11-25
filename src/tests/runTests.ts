@@ -142,5 +142,20 @@ test('Leonida Heightfield & Surface queries cover regional biomes consistently',
   assert(places.length >= 25, 'Verified Leonida place catalog must stay intact');
 });
 
+import { createInitialMissions, DYNAMIC_WORLD_EVENTS, getMissionStage2Target } from '../gameplay/missionContent';
+import { LEONIDA_ISLANDS } from '../world/leonidaGeoData';
+
+test('Round 7 Regional Missions, Dynamic World Events & Keys Islands integrity', () => {
+  const missions = createInitialMissions();
+  assert(missions.length >= 6, 'Expected at least 6 Greater Leonida missions');
+  const stage2 = getMissionStage2Target('mission_keys_intercept');
+  assert(Boolean(stage2 && stage2.pos.x > 100), 'Keys Offshore Intercept Stage 2 must target Vice Beach Marina');
+  assert(DYNAMIC_WORLD_EVENTS.length >= 3, 'Expected scheduled dynamic world events');
+  const keys = LEONIDA_ISLANDS.filter((i) =>
+    ['isl_corsair_key', 'isl_shoeless_keys', 'isl_key_lento', 'isl_mile_zero'].includes(i.id)
+  );
+  assert(keys.length === 4, 'All 4 southern Overseas Keys islands must exist in leonidaGeoData');
+});
+
 console.log(`\nTest Summary: ${passed} passed, ${failed} failed.`);
 if (failed > 0) process.exit(1);

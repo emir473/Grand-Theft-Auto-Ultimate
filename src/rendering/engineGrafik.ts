@@ -21,6 +21,7 @@ import {
   ShadowGenerator,
   TransformNode,
   Vector3,
+  VolumetricLightScatteringPostProcess,
 } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { QualityProfile } from '../core/types';
@@ -51,6 +52,7 @@ export class GraphicsEngine implements GameModule {
   public hemiLight!: HemisphericLight;
   public shadowGenerator: ShadowGenerator | CascadedShadowGenerator | null = null;
   public pipeline: DefaultRenderingPipeline | null = null;
+  public godRays: VolumetricLightScatteringPostProcess | null = null;
   public shadowDoc: ShadowConfigDoc = {
     activeMethod: 'ShadowGenerator',
     filter: 'PCF_MEDIUM',
@@ -175,7 +177,7 @@ export class GraphicsEngine implements GameModule {
     };
     const mapSize = Math.min(desiredSize[profile], this.maxSupportedTexSize);
 
-    if (profile === 'high' || profile === 'ultra') {
+    if ((profile === 'high' || profile === 'ultra') && this.backend !== 'WebGPU') {
       const csm = new CascadedShadowGenerator(mapSize, this.sunLight);
       csm.numCascades = profile === 'ultra' ? 4 : 2;
       csm.lambda = 0.65;
@@ -196,12 +198,16 @@ export class GraphicsEngine implements GameModule {
       };
     } else {
       const sg = new ShadowGenerator(mapSize, this.sunLight);
-      sg.usePercentageCloserFiltering = profile === 'medium';
+      if (this.backend === 'WebGPU') {
+        sg.usePoissonSampling = true;
+      } else {
+        sg.usePercentageCloserFiltering = profile === 'medium';
+      }
       sg.bias = 0.0009;
       this.shadowGenerator = sg;
       this.shadowDoc = {
         activeMethod: 'ShadowGenerator',
-        filter: profile === 'medium' ? 'PCF_LOW' : 'HARD',
+        filter: this.backend === 'WebGPU' ? 'POISSON' : profile === 'medium' ? 'PCF_LOW' : 'HARD',
         mapSize,
         bias: 0.0009,
         numCascades: 1,
@@ -248,6 +254,34 @@ export class GraphicsEngine implements GameModule {
     pipe.depthOfFieldEnabled = false;
 
     this.scene.environmentIntensity = 0.85;
+
+    if (this.godRays) {
+      this.godRays.dispose(cam);
+      this.godRays = null;
+    }
+    if ((profile === 'high' || profile === 'ultra') && this.backend !== 'WebGPU') {
+      try {
+        const vls = new VolumetricLightScatteringPostProcess(
+          'leonidaGodRays',
+          0.5,
+          cam,
+          undefined,
+          48,
+          undefined,
+          this.engine,
+          false
+        );
+        vls.exposure = 0.14;
+        vls.decay = 0.965;
+        vls.weight = 0.36;
+        vls.density = 0.65;
+        vls.useCustomMeshPosition = true;
+        vls.customMeshPosition = this.sunLight.position.clone();
+        this.godRays = vls;
+      } catch {
+        this.godRays = null;
+      }
+    }
 
     this.pipeline = pipe;
   }
@@ -322,7 +356,15 @@ export class GraphicsEngine implements GameModule {
       }
       const cpuUpdateMs = performance.now() - cpuStart;
 
-      this.scene.render();
+      if (this.godRays) {
+        this.godRays.customMeshPosition.copyFrom(this.sunLight.position);
+      }
+
+      try {
+        this.scene.render();
+      } catch (err) {
+        console.error('[engine_grafik] Render pass recovered:', err);
+      }
       const frameMs = performance.now() - renderStart;
       this.updateMetrics(frameMs, cpuUpdateMs);
     });
@@ -382,6 +424,9 @@ export class GraphicsEngine implements GameModule {
     window.removeEventListener('resize', this.onResizeBound);
     document.removeEventListener('visibilitychange', this.onVisibilityBound);
     this.shadowGenerator?.dispose();
+    if (this.godRays && this.scene?.activeCamera) {
+      this.godRays.dispose(this.scene.activeCamera);
+    }
     this.pipeline?.dispose();
     this.scene?.dispose();
     this.engine?.dispose();

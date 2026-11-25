@@ -3,18 +3,20 @@
  * Multi-layered Water (Ocean, Coast, Swamps, Infinity Pool, Rivers)
  * Separates CPU Gerstner wave height/normal/current queries from visual water mesh,
  * computes buoyancy forces (rho * displacedVolume * g), swimming/diving/oxygen states,
- * underwater depth fog/bubbles, and persistent diving salvage sites.
+ * underwater caustic shimmer, depth fog/bubbles, and sculpted diving salvage wrecks.
  */
 
 import {
   Color3,
   Color4,
+  DynamicTexture,
   Mesh,
   MeshBuilder,
   ParticleSystem,
   PBRMaterial,
   Scene,
   Texture,
+  TransformNode,
   Vector3,
 } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
@@ -31,7 +33,7 @@ export interface SalvageSite {
   position: Vec3;
   depthMeters: number;
   rewardCents: number;
-  mesh?: Mesh;
+  mesh?: TransformNode;
 }
 
 interface GerstnerComponent {
@@ -48,6 +50,84 @@ const OCEAN_WAVES: GerstnerComponent[] = [
   { dirX: -0.65, dirZ: 0.76, amplitude: 0.12, wavelength: 9, speed: 2.4 },
 ];
 
+function createCausticTexture(scene: Scene): DynamicTexture {
+  const tex = new DynamicTexture('waterCausticsTex', { width: 256, height: 256 }, scene, true);
+  const ctx = tex.getContext() as unknown as CanvasRenderingContext2D;
+  ctx.fillStyle = '#063344';
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.strokeStyle = 'rgba(130,245,255,0.42)';
+  ctx.lineWidth = 2.5;
+  for (let i = 0; i < 28; i++) {
+    const cx = (i * 53) % 256;
+    const cy = (i * 89) % 256;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 18 + (i % 4) * 5, 10 + (i % 3) * 4, (i * 0.4) % Math.PI, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  tex.update(true);
+  tex.uScale = 24;
+  tex.vScale = 24;
+  return tex;
+}
+
+function buildSalvageWreckMesh(scene: Scene, site: SalvageSite): TransformNode {
+  const root = new TransformNode(`salvage_${site.id}`, scene);
+  root.position.set(site.position.x, site.position.y, site.position.z);
+
+  const hullMat = new PBRMaterial(`salvageMat_${site.id}`, scene);
+  hullMat.albedoColor = site.kind === 'briefcase' ? new Color3(0.75, 0.6, 0.18) : new Color3(0.24, 0.31, 0.3);
+  hullMat.metallic = 0.62;
+  hullMat.roughness = 0.45;
+
+  const beaconMat = new PBRMaterial(`salvageBeacon_${site.id}`, scene);
+  beaconMat.albedoColor = new Color3(0.18, 0.95, 0.85);
+  beaconMat.emissiveColor = new Color3(0.15, 0.88, 0.78);
+
+  if (site.kind === 'briefcase') {
+    const caseBody = MeshBuilder.CreateCylinder(`${site.id}_case`, { diameter: 0.95, height: 0.34, tessellation: 12 }, scene);
+    caseBody.scaling.set(1.3, 1.0, 0.8);
+    caseBody.rotation.z = 0.28;
+    caseBody.material = hullMat;
+    caseBody.parent = root;
+    const beacon = MeshBuilder.CreateSphere(`${site.id}_beacon`, { diameter: 0.24, segments: 12 }, scene);
+    beacon.position.set(0.32, 0.25, 0);
+    beacon.material = beaconMat;
+    beacon.parent = root;
+  } else if (site.kind === 'aircraft_wreck') {
+    const fuse = MeshBuilder.CreateCylinder(`${site.id}_fuse`, { diameterTop: 0.75, diameterBottom: 1.35, height: 6.2, tessellation: 18 }, scene);
+    fuse.rotation.x = Math.PI * 0.5;
+    fuse.rotation.z = 0.32;
+    fuse.material = hullMat;
+    fuse.parent = root;
+    const wing = MeshBuilder.CreateBox(`${site.id}_wing`, { width: 7.4, height: 0.16, depth: 1.45 }, scene);
+    wing.rotation.z = 0.32;
+    wing.position.y = 0.25;
+    wing.material = hullMat;
+    wing.parent = root;
+  } else {
+    const hull = MeshBuilder.CreateRibbon(
+      `${site.id}_hull`,
+      {
+        pathArray: [
+          [new Vector3(-1.35, 0.45, -2.5), new Vector3(0, -0.5, -2.6), new Vector3(1.35, 0.45, -2.5)],
+          [new Vector3(-1.55, 0.55, 0.4), new Vector3(0, -0.65, 0.4), new Vector3(1.55, 0.55, 0.4)],
+          [new Vector3(-0.2, 0.52, 3.1), new Vector3(0, 0.1, 3.2), new Vector3(0.2, 0.52, 3.1)],
+        ],
+        sideOrientation: Mesh.DOUBLESIDE,
+      },
+      scene
+    );
+    hull.rotation.z = -0.35;
+    hull.material = hullMat;
+    hull.parent = root;
+    const mast = MeshBuilder.CreateCylinder(`${site.id}_mast`, { diameter: 0.18, height: 2.2, tessellation: 10 }, scene);
+    mast.position.set(0, 1.1, -0.2);
+    mast.material = beaconMat;
+    mast.parent = root;
+  }
+  return root;
+}
+
 export class WaterDivingSystem implements GameModule {
   public readonly moduleId = 'physik_wasser_tauchen';
   public readiness: ModuleReadiness = 'uninitialized';
@@ -60,6 +140,7 @@ export class WaterDivingSystem implements GameModule {
 
   private oceanMesh!: Mesh;
   private oceanMat!: PBRMaterial;
+  private causticTex!: DynamicTexture;
   private poolMesh!: Mesh;
   private shoreFoamMeshes: Array<{ mesh: Mesh; baseX: number }> = [];
   private shoreFoamMat!: PBRMaterial;
@@ -80,16 +161,19 @@ export class WaterDivingSystem implements GameModule {
     if (this.readiness === 'initialized' || this.readiness === 'running') return;
 
     const oceanNorm = this.loader.getTextureBank().createWaveNormalMap('ocean_normal', 256);
+    this.causticTex = createCausticTexture(this.scene);
 
-    // Ocean & coastal water plane (high tessellation)
+    // Ocean & coastal water plane (high tessellation + animated caustics shimmer)
     this.oceanMesh = MeshBuilder.CreateGround('leonidaOcean', { width: 1600, height: 1600, subdivisions: 84 }, this.scene);
     this.oceanMesh.position.y = 0;
     this.oceanMesh.receiveShadows = true;
 
     this.oceanMat = new PBRMaterial('leonidaOceanMat', this.scene);
     this.oceanMat.albedoColor = new Color3(0.04, 0.36, 0.44);
+    this.oceanMat.emissiveTexture = this.causticTex;
+    this.oceanMat.emissiveColor = new Color3(0.08, 0.25, 0.32);
     this.oceanMat.metallic = 0.14;
-    this.oceanMat.roughness = 0.07;
+    this.oceanMat.roughness = 0.06;
     this.oceanMat.alpha = 0.88;
     this.oceanMat.bumpTexture = oceanNorm;
     this.oceanMat.bumpTexture.level = 0.72;
@@ -115,6 +199,8 @@ export class WaterDivingSystem implements GameModule {
     this.poolMesh.position.set(22, 1.35, 12);
     const poolMat = new PBRMaterial('villaPoolMat', this.scene);
     poolMat.albedoColor = new Color3(0.08, 0.56, 0.72);
+    poolMat.emissiveTexture = this.causticTex;
+    poolMat.emissiveColor = new Color3(0.05, 0.22, 0.3);
     poolMat.roughness = 0.04;
     poolMat.metallic = 0.05;
     poolMat.alpha = 0.82;
@@ -177,22 +263,11 @@ export class WaterDivingSystem implements GameModule {
 
     for (const site of this.salvageSites) {
       if (this.registry.state.collectedSalvageIds.has(site.id)) continue;
-      const mesh = MeshBuilder.CreateBox(`salvage_${site.id}`, { width: 2.4, height: 1.1, depth: 3.6 }, this.scene);
-      mesh.position.set(site.position.x, site.position.y, site.position.z);
-      const mat = new PBRMaterial(`salvageMat_${site.id}`, this.scene);
-      mat.albedoColor = site.kind === 'briefcase' ? new Color3(0.75, 0.6, 0.18) : new Color3(0.28, 0.34, 0.32);
-      mat.metallic = 0.65;
-      mat.roughness = 0.48;
-      mesh.material = mat;
-      site.mesh = mesh;
+      site.mesh = buildSalvageWreckMesh(this.scene, site);
     }
   }
 
-  /**
-   * Deterministic Gerstner wave elevation & surface normal query for boats, buoys, and swimmers.
-   */
   sampleWaterSurface(x: number, z: number): { height: number; normal: Vec3; current: Vec3; zone: 'ocean' | 'pool' | 'swamp' } {
-    // Infinity pool bounds
     if (x >= 14 && x <= 30 && z >= 7.5 && z <= 16.5) {
       return { height: 1.35, normal: { x: 0, y: 1, z: 0 }, current: { x: 0, y: 0, z: 0 }, zone: 'pool' };
     }
@@ -228,16 +303,11 @@ export class WaterDivingSystem implements GameModule {
     };
   }
 
-  /**
-   * Archimedes buoyancy approximation: F_b = rho_water * V_submerged * g
-   */
   computeBuoyancyForce(massKg: number, displacedVolumeM3: number, submergedFraction: number): number {
-    const waterDensity = 1025; // kg/m^3 seawater
+    const waterDensity = 1025;
     const g = 9.81;
     const clampedSub = clamp(submergedFraction, 0, 1);
-    const upwardForce = waterDensity * displacedVolumeM3 * clampedSub * g;
-    const gravityForce = massKg * g;
-    return upwardForce - gravityForce;
+    return waterDensity * displacedVolumeM3 * clampedSub * g - massKg * g;
   }
 
   collectSalvage(siteId: string): { ok: boolean; rewardCents: number; name: string } {
@@ -318,6 +388,8 @@ export class WaterDivingSystem implements GameModule {
       tex.uOffset = (t * 0.018) % 1;
       tex.vOffset = (t * 0.012) % 1;
     }
+    this.causticTex.uOffset = (-t * 0.011) % 1;
+    this.causticTex.vOffset = (t * 0.014) % 1;
 
     const wash = Math.sin(t * 1.45) * 1.8;
     this.shoreFoamMat.alpha = 0.35 + Math.abs(Math.sin(t * 1.45)) * 0.38;
@@ -350,6 +422,7 @@ export class WaterDivingSystem implements GameModule {
 
   dispose(): void {
     this.bubbleParticles?.dispose();
+    this.causticTex?.dispose();
     this.oceanMesh?.dispose();
     this.poolMesh?.dispose();
     for (const f of this.shoreFoamMeshes) f.mesh.dispose();

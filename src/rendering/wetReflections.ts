@@ -52,7 +52,7 @@ export class WetAsphaltReflections {
     this.maskTex = mask;
 
     const texSize = profile === 'ultra' ? 512 : 256;
-    const mirror = new MirrorTexture('wetPlazaMirror', texSize, scene, true);
+    const mirror = new MirrorTexture('wetPlazaMirror', texSize, scene, false);
     mirror.mirrorPlane = new Plane(0, -1, 0, 0.56);
     mirror.level = 0.72;
     this.mirrorTex = mirror;
@@ -80,7 +80,9 @@ export class WetAsphaltReflections {
     if (!this.mirrorTex) return;
     if (!this.mirrorTex.renderList) this.mirrorTex.renderList = [];
     for (const m of node.getChildMeshes(false)) {
-      this.mirrorTex.renderList.push(m);
+      if (m.getTotalVertices() > 0) {
+        this.mirrorTex.renderList.push(m);
+      }
     }
   }
 

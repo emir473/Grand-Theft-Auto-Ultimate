@@ -27,7 +27,11 @@ export async function createSafeBabylonEngine(
   const prevLogLevel = Logger.LogLevels;
 
   try {
-    const gpu = (navigator as unknown as NavigatorGPULike).gpu;
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isSafariWebKit =
+      /AppleWebKit/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg|Firefox|OPR/i.test(ua);
+
+    const gpu = !isSafariWebKit ? (navigator as unknown as NavigatorGPULike).gpu : undefined;
     const adapter = gpu?.requestAdapter
       ? await gpu.requestAdapter({ powerPreference: 'high-performance' }).catch(() => null)
       : null;

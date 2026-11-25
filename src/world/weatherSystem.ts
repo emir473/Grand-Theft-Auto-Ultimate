@@ -237,21 +237,30 @@ export class WeatherClimateSystem implements GameModule {
 
     this.nightFactor = clamp(1 - (sunElev + 0.12) / 0.35, 0, 1);
 
-    const isTwilight = sunElev > -0.15 && sunElev < 0.22;
+    const isTwilight = sunElev > -0.15 && sunElev < 0.24;
+    const isEveningDusk = isTwilight && hours >= 16.5;
     const stormDarken = 1 - this.currentParams.cloudCoverage * 0.42;
 
-    const zenithDay = new Color3(0.14, 0.44, 0.85);
+    const zenithDay = isEveningDusk ? new Color3(0.28, 0.22, 0.48) : new Color3(0.14, 0.44, 0.85);
     const zenithNight = new Color3(0.02, 0.04, 0.1);
     const zenithColor = Color3.Lerp(zenithDay, zenithNight, this.nightFactor).scale(stormDarken);
 
-    let horizonDay = isTwilight ? new Color3(0.95, 0.48, 0.32) : new Color3(0.58, 0.78, 0.94);
+    let horizonDay = isEveningDusk
+      ? new Color3(0.96, 0.42, 0.62)
+      : isTwilight
+      ? new Color3(0.96, 0.56, 0.34)
+      : new Color3(0.58, 0.78, 0.94);
     if (this.currentParams.precipitation > 0.3) {
       horizonDay = Color3.Lerp(horizonDay, new Color3(0.32, 0.36, 0.42), 0.75);
     }
-    const horizonNight = new Color3(0.05, 0.08, 0.16);
+    const horizonNight = new Color3(0.06, 0.07, 0.16);
     const horizonColor = Color3.Lerp(horizonDay, horizonNight, this.nightFactor);
 
-    const sunTint = isTwilight ? new Color3(1.0, 0.52, 0.24) : new Color3(1.0, 0.94, 0.84);
+    const sunTint = isEveningDusk
+      ? new Color3(1.0, 0.46, 0.54)
+      : isTwilight
+      ? new Color3(1.0, 0.56, 0.28)
+      : new Color3(1.0, 0.94, 0.84);
 
     // Update Babylon lights & fog
     this.gfx.sunLight.direction = sunDir.scale(-1);

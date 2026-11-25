@@ -1,11 +1,21 @@
 /**
  * MODULE 12B – Police, Forensics & 5-Star Pursuit System
  * Forensics (witness, CCTV, plate, ballistic clues), FOV + LOS + Sound Occlusion perception,
- * pursuit cruisers, fictional PIT maneuvers, spike strips, helicopter searchlight,
+ * curved lofted VCPD pursuit cruisers & SWAT Enforcers, fictional PIT maneuvers,
+ * spike strips, rotor-spinning VCPD helicopter with active SpotLight searchlight,
  * search cooldown, arrest (BUSTED), and localized/synthesized radio dispatch.
  */
 
-import { Color3, Mesh, MeshBuilder, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
+import {
+  Color3,
+  Mesh,
+  MeshBuilder,
+  PBRMaterial,
+  Scene,
+  SpotLight,
+  TransformNode,
+  Vector3,
+} from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { Vec3 } from '../core/types';
 import { clamp } from '../core/types';
@@ -13,16 +23,25 @@ import type { GraphicsEngine } from '../rendering/engineGrafik';
 import type { WorldArchitecture } from '../world/worldArchitecture';
 import type { PlayerController } from '../gameplay/playerController';
 import type { VehiclePhysicsSystem } from '../gameplay/vehiclePhysics';
+import { HANDLING_PROFILES } from '../gameplay/vehicleModels';
+import { buildSculptedVehicleRig, type SculptedVehicleRig } from '../gameplay/vehicleSculptor';
+import { createAircraftMesh } from '../gameplay/aviationMarine';
 import { i18n } from '../ui/localization';
 
 export interface PoliceUnit {
   id: string;
-  kind: 'cruiser' | 'helicopter';
+  kind: 'cruiser' | 'swat' | 'helicopter';
   position: Vec3;
   yaw: number;
   speedMps: number;
+  wheelRoll: number;
   hasLineOfSight: boolean;
   mesh: TransformNode;
+  rig?: SculptedVehicleRig;
+  rotorNode?: TransformNode;
+  tailRotorNode?: TransformNode;
+  searchLight?: SpotLight;
+  searchCone?: Mesh;
 }
 
 export interface SpikeStrip {
@@ -49,7 +68,7 @@ export class PoliceSystem implements GameModule {
   public lastRadioDispatch = '';
   public bustProgress = 0;
 
-  private policeMat!: PBRMaterial;
+  private searchConeMat!: PBRMaterial;
   private unsubEvents: Array<() => void> = [];
 
   validateDependencies(registry: GameRegistry): void {
@@ -64,10 +83,11 @@ export class PoliceSystem implements GameModule {
 
   init(): void {
     if (this.readiness === 'initialized' || this.readiness === 'running') return;
-    this.policeMat = new PBRMaterial('vcpdUnitMat', this.scene);
-    this.policeMat.albedoColor = new Color3(0.08, 0.14, 0.24);
-    this.policeMat.metallic = 0.6;
-    this.policeMat.roughness = 0.25;
+    this.searchConeMat = new PBRMaterial('vcpdSearchConeMat', this.scene);
+    this.searchConeMat.albedoColor = new Color3(0.88, 0.94, 1.0);
+    this.searchConeMat.emissiveColor = new Color3(0.55, 0.72, 0.95);
+    this.searchConeMat.alpha = 0.14;
+    this.searchConeMat.roughness = 0.9;
 
     this.unsubEvents.push(
       this.registry.events.on('police:crimeReported', (ev) => {
@@ -133,19 +153,15 @@ export class PoliceSystem implements GameModule {
       const road = this.world.roadNetwork.findNearestNode({ x: base.x + 55, y: base.y, z: base.z + 45 });
       const spawnPos = road ? { x: road.x, y: road.y, z: road.z } : { x: base.x + 55, y: base.y, z: base.z + 45 };
 
-      const root = new TransformNode(`policeCruiser_${idx}`, this.scene);
-      const body = MeshBuilder.CreateBox(`cruiserBody_${idx}`, { width: 1.95, height: 1.15, depth: 4.7 }, this.scene);
-      body.position.y = 0.68;
-      body.material = this.policeMat;
-      body.parent = root;
-
-      const lightbar = MeshBuilder.CreateBox(`cruiserBar_${idx}`, { width: 1.2, height: 0.16, depth: 0.35 }, this.scene);
-      lightbar.position.y = 1.38;
-      const barMat = new PBRMaterial(`barMat_${idx}`, this.scene);
-      barMat.albedoColor = new Color3(0.2, 0.4, 1.0);
-      barMat.emissiveColor = new Color3(0.15, 0.45, 1.0);
-      lightbar.material = barMat;
-      lightbar.parent = root;
+      const rig = buildSculptedVehicleRig(
+        this.scene,
+        this.gfx,
+        `vcpd_pursuit_${idx}`,
+        'police',
+        HANDLING_PROFILES.police,
+        '#111827',
+        `VCPD-${901 + idx}`
+      );
 
       this.units.push({
         id: `vcpd_${idx}`,
@@ -153,25 +169,86 @@ export class PoliceSystem implements GameModule {
         position: spawnPos,
         yaw: 0,
         speedMps: 0,
+        wheelRoll: 0,
         hasLineOfSight: false,
-        mesh: root,
+        mesh: rig.root,
+        rig,
+      });
+    }
+
+    if (stars >= 4 && !this.units.some((u) => u.kind === 'swat')) {
+      const base = this.registry.getActiveCharacter().position;
+      const road = this.world.roadNetwork.findNearestNode({ x: base.x - 65, y: base.y, z: base.z + 55 });
+      const spawnPos = road ? { x: road.x, y: road.y, z: road.z } : { x: base.x - 65, y: base.y, z: base.z + 55 };
+      const swatRig = buildSculptedVehicleRig(
+        this.scene,
+        this.gfx,
+        'vcpd_swat_enforcer',
+        'truck',
+        HANDLING_PROFILES.truck,
+        '#0f172a',
+        'SWAT-01'
+      );
+      this.units.push({
+        id: 'vcpd_swat_1',
+        kind: 'swat',
+        position: spawnPos,
+        yaw: 0,
+        speedMps: 0,
+        wheelRoll: 0,
+        hasLineOfSight: false,
+        mesh: swatRig.root,
+        rig: swatRig,
       });
     }
 
     if (stars >= 3 && !this.units.some((u) => u.kind === 'helicopter')) {
       const p = this.registry.getActiveCharacter().position;
-      const heliRoot = new TransformNode('vcpdChopper', this.scene);
-      const fuse = MeshBuilder.CreateBox('vcpdChopperBody', { width: 2.0, height: 1.6, depth: 5.5 }, this.scene);
-      fuse.material = this.policeMat;
-      fuse.parent = heliRoot;
+      const acRig = createAircraftMesh(
+        this.scene,
+        this.gfx,
+        'vcpdChopper',
+        new Color3(0.08, 0.14, 0.24),
+        7.8,
+        2.2,
+        'helicopter'
+      );
+      const searchLight = new SpotLight(
+        'vcpdHeliSpot',
+        new Vector3(0, -0.4, 1.2),
+        new Vector3(0, -1, 0.25).normalize(),
+        Math.PI * 0.26,
+        12,
+        this.scene
+      );
+      searchLight.intensity = 18;
+      searchLight.diffuse = new Color3(0.92, 0.96, 1.0);
+      searchLight.parent = acRig.root;
+
+      const searchCone = MeshBuilder.CreateCylinder(
+        'vcpdSearchCone',
+        { diameterTop: 0.45, diameterBottom: 14, height: 32, tessellation: 18 },
+        this.scene
+      );
+      searchCone.position.set(0, -16, 4.0);
+      searchCone.rotation.x = 0.24;
+      searchCone.material = this.searchConeMat;
+      searchCone.isPickable = false;
+      searchCone.parent = acRig.root;
+
       this.units.push({
         id: 'vcpd_air1',
         kind: 'helicopter',
         position: { x: p.x + 40, y: 38, z: p.z + 40 },
         yaw: 0,
         speedMps: 24,
+        wheelRoll: 0,
         hasLineOfSight: true,
-        mesh: heliRoot,
+        mesh: acRig.root,
+        rotorNode: acRig.rotorNode,
+        tailRotorNode: acRig.tailRotorNode,
+        searchLight,
+        searchCone,
       });
     }
 
@@ -194,7 +271,10 @@ export class PoliceSystem implements GameModule {
   }
 
   private clearAllUnits(): void {
-    for (const u of this.units) u.mesh.dispose();
+    for (const u of this.units) {
+      u.searchLight?.dispose();
+      u.mesh.dispose();
+    }
     for (const s of this.spikeStrips) s.mesh.dispose();
     this.units = [];
     this.spikeStrips = [];
@@ -220,8 +300,7 @@ export class PoliceSystem implements GameModule {
       const dz = pPos.z - unit.position.z;
       const dist = Math.hypot(dx, dz);
 
-      // Perception FOV & sight distance check
-      const sightMax = unit.kind === 'helicopter' ? 140 : 75;
+      const sightMax = unit.kind === 'helicopter' ? 145 : 78;
       unit.hasLineOfSight = dist < sightMax && char.inInteriorId === null;
       if (unit.hasLineOfSight) {
         anyVisualContact = true;
@@ -234,24 +313,33 @@ export class PoliceSystem implements GameModule {
         unit.position.z += (target.z + Math.sin(orbitAngle) * 28 - unit.position.z) * clamp(simDt * 1.5, 0, 1);
         unit.position.y = Math.max(32, pPos.y + 30);
         unit.yaw = Math.atan2(dx, dz);
+        if (unit.rotorNode) unit.rotorNode.rotation.y += simDt * 24;
+        if (unit.tailRotorNode) unit.tailRotorNode.rotation.x += simDt * 30;
+        if (unit.searchCone) unit.searchCone.isVisible = this.registry.clock.getIsNight();
       } else {
         const tx = (unit.hasLineOfSight ? pPos.x : target.x) - unit.position.x;
         const tz = (unit.hasLineOfSight ? pPos.z : target.z) - unit.position.z;
         const tDist = Math.hypot(tx, tz);
-        if (tDist > 4.2) {
+        const maxSpd = unit.kind === 'swat' ? 21 : clamp(16 + stars * 2.6, 16, 29);
+        if (tDist > 4.4) {
           unit.yaw = Math.atan2(tx, tz);
-          unit.speedMps = clamp(16 + stars * 2.5, 16, 28);
+          unit.speedMps = maxSpd;
           unit.position.x += (tx / tDist) * unit.speedMps * simDt;
           unit.position.z += (tz / tDist) * unit.speedMps * simDt;
           unit.position.y = this.world.getTerrainHeight(unit.position.x, unit.position.z);
         } else {
           unit.speedMps = 0;
-          // Fictional PIT maneuver / ram impulse on suspect vehicle
           const activeVeh = this.vehicles.getActiveVehicleRuntime();
-          if (activeVeh && tDist < 4.5) {
-            activeVeh.angularVelY += 0.4 * simDt;
-            this.vehicles.applyImpactDamage(activeVeh, 24000, 'rear');
+          if (activeVeh && tDist < 4.7) {
+            activeVeh.angularVelY += (unit.kind === 'swat' ? 0.75 : 0.42) * simDt;
+            this.vehicles.applyImpactDamage(activeVeh, unit.kind === 'swat' ? 38000 : 24000, 'rear');
           }
+        }
+        unit.wheelRoll += unit.speedMps * simDt * 2.4;
+        if (unit.rig) {
+          for (const w of unit.rig.wheels) w.rotation.x = unit.wheelRoll;
+          const flash = Math.sin(this.registry.clock.simulationTime * 16) > 0;
+          unit.rig.brakeLightMat.emissiveColor.set(flash ? 1.0 : 0.25, 0.05, flash ? 0.1 : 0.9);
         }
       }
 
@@ -259,7 +347,6 @@ export class PoliceSystem implements GameModule {
       unit.mesh.rotation.y = unit.yaw;
     }
 
-    // Spike strip contact detection
     const activeVeh = this.vehicles.getActiveVehicleRuntime();
     if (activeVeh) {
       for (const strip of this.spikeStrips) {
@@ -270,9 +357,8 @@ export class PoliceSystem implements GameModule {
       }
     }
 
-    // Arrest / BUSTED check when police officer is within 5.5m and player is slow/on foot
     const nearestDist = this.units
-      .filter((u) => u.kind === 'cruiser')
+      .filter((u) => u.kind !== 'helicopter')
       .reduce((min, u) => Math.min(min, Math.hypot(u.position.x - pPos.x, u.position.z - pPos.z)), Infinity);
 
     const playerSpeed = activeVeh ? activeVeh.velocity.length() : 0;
@@ -287,7 +373,6 @@ export class PoliceSystem implements GameModule {
       this.bustProgress = Math.max(0, this.bustProgress - simDt * 1.5);
     }
 
-    // Cooldown when visual contact is broken
     if (anyVisualContact) {
       this.registry.state.wantedCooldownSec = 28 + stars * 4;
     } else {
@@ -309,7 +394,7 @@ export class PoliceSystem implements GameModule {
   dispose(): void {
     for (const unsub of this.unsubEvents) unsub();
     this.clearAllUnits();
-    this.policeMat?.dispose();
+    this.searchConeMat?.dispose();
     this.readiness = 'disposed';
   }
 }

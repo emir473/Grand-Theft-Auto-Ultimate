@@ -74,11 +74,11 @@ export function registerCustomShaders(): void {
       float rayleigh = pow(1.0 - elev, 2.2);
       vec3 sky = mix(zenithColor, horizonColor, rayleigh);
 
-      // Mie scattering & sun disc
+      // Mie scattering & crisp sun disc + solar aureole
       float sunDot = max(dot(dir, normalize(sunDirection)), 0.0);
-      float mieHalo = pow(sunDot, 12.0) * 0.45 + pow(sunDot, 128.0) * 0.85;
+      float mieHalo = pow(sunDot, 10.0) * 0.48 + pow(sunDot, 110.0) * 0.92;
       float sunDisc = smoothstep(0.9992, 0.9997, sunDot);
-      sky += sunTint * (mieHalo + sunDisc * 2.4);
+      sky += sunTint * (mieHalo + sunDisc * 2.6);
 
       // Rotating starfield at night
       if (starVisibility > 0.01 && dir.y > 0.02) {
@@ -93,14 +93,21 @@ export function registerCustomShaders(): void {
         }
       }
 
-      // Approximated volumetric cloud layer projection
-      if (dir.y > 0.04 && cloudDensity > 0.01) {
-        vec2 cloudUV = dir.xz / (dir.y + 0.14) * 1.35 + vec2(time * 0.008, time * 0.004);
-        float cVal = fbmCloud(cloudUV);
-        float coverage = smoothstep(1.0 - cloudDensity * 0.78, 0.95, cVal);
-        vec3 cloudLit = mix(horizonColor * 0.65, vec3(0.98, 0.95, 0.92), clamp(sunDirection.y * 1.4 + 0.3, 0.15, 1.0));
-        cloudLit += sunTint * pow(sunDot, 8.0) * 0.35;
-        sky = mix(sky, cloudLit, coverage * smoothstep(0.04, 0.22, dir.y) * 0.85);
+      // Dual-layer tropical clouds (puffy flat-bottomed cumulus + wispy upper cirrus streaks)
+      if (dir.y > 0.03 && cloudDensity > 0.01) {
+        vec2 lowUV = dir.xz / (dir.y + 0.12) * 1.25 + vec2(time * 0.008, time * 0.004);
+        float cLow = fbmCloud(lowUV);
+        float puff = smoothstep(0.96 - cloudDensity * 0.72, 0.92, cLow);
+
+        vec2 highUV = dir.xz / (dir.y + 0.22) * 2.6 + vec2(time * 0.003, -time * 0.005);
+        float cHigh = fbmCloud(highUV * vec2(1.8, 0.65));
+        float wisps = smoothstep(0.68, 0.96, cHigh) * 0.42;
+
+        float cov = clamp(puff + wisps * (1.0 - puff * 0.7), 0.0, 1.0);
+        vec3 shadowBase = mix(horizonColor * 0.72, zenithColor * 1.25, 0.35);
+        vec3 cloudLit = mix(shadowBase, vec3(0.98, 0.96, 0.94), clamp(sunDirection.y * 1.5 + 0.35, 0.18, 1.0));
+        cloudLit += sunTint * (pow(sunDot, 7.0) * 0.48 + (1.0 - cLow) * 0.16);
+        sky = mix(sky, cloudLit, cov * smoothstep(0.03, 0.20, dir.y) * 0.88);
       }
 
       gl_FragColor = vec4(sky, 1.0);

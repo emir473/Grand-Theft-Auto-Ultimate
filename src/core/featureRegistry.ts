@@ -18,10 +18,10 @@ export const FEATURE_REGISTRY: FeatureAuditEntry[] = [
   {
     id: 'core_engine',
     section: '2 & 28C. Engine & Crystal-Clear Pipeline',
-    name: 'Babylon.js WebGPU / WebGL2 Fallback, ACES Pipeline (No DoF/CA Blur), Clock',
+    name: 'Babylon.js WebGPU / WebGL2 Fallback, ACES Pipeline, Sun God-Rays (No DoF/CA Blur), Clock',
     status: 'IMPLEMENTED_VERIFIED',
     owners: ['src/rendering/engineGrafik.ts', 'src/core/registry.ts', 'src/core/clock.ts'],
-    notes: 'Round 4 disabled chromaticAberrationEnabled & depthOfFieldEnabled for sharp photorealism + set environment IBL intensity.',
+    notes: 'Round 7 added hardware-safe VolumetricLightScatteringPostProcess sun shafts on High/Ultra while keeping CA & DoF disabled.',
   },
   {
     id: 'geography_1to1',
@@ -34,18 +34,18 @@ export const FEATURE_REGISTRY: FeatureAuditEntry[] = [
   {
     id: 'maps_gps',
     section: '15 & 28I. Map, Pause Map & Minimap',
-    name: 'Full-Color Canonical World Map, Minimap & A* Road GPS',
+    name: 'Full-Color Canonical World Map, IMG_8170 Street/Sat Minimap & A* Road GPS',
     status: 'IMPLEMENTED_VERIFIED',
     owners: ['src/ui/WorldMapOverlay.tsx', 'src/ui/Minimap.tsx', 'src/world/roadNetwork.ts'],
-    notes: 'Synced 1:1 to leonidaGeoData & RoadNetwork A* with pan/zoom/search/filters; A* verified in runTests.ts.',
+    notes: 'Round 7 added toggleable IMG_8170 light-toned Street Minimap mode (STR/SAT) alongside full-state WorldMapOverlay.',
   },
   {
     id: 'photorealistic_assets',
     section: '5 & 28D-F. Graphics, Landmarks, VFX & Density',
-    name: 'Wet Mirror Puddles, Downtown Signage, Arena Neon, Bridges, Regional Landmarks & Particle VFX',
+    name: 'Wet Puddles, Magenta Dusk Sky, Dual Clouds, Overseas Keys Bridges, District Infill & Particle VFX',
     status: 'PARTIAL',
-    owners: ['src/rendering/wetReflections.ts', 'src/rendering/vfxParticles.ts', 'src/world/foliageAndProps.ts', 'src/world/downtownInfra.ts', 'src/world/signageAndLandmarks.ts', 'src/world/regionalLandmarks.ts'],
-    notes: 'Round 6 added MEGAMUNDO/LNB/OCEAN VIEW illuminated signage, Sahara Arena neon lattice, Starfish causeway piers/lamps, VC Port TEUs, VCIA jetways/runway lights, Allied Crystal/Swamp/Kalaga props, and layered tire/fire/wake ParticleSystems.',
+    owners: ['src/rendering/wetReflections.ts', 'src/rendering/shaders.ts', 'src/world/viceDistrictsAndKeys.ts', 'src/world/signageAndLandmarks.ts', 'src/world/regionalLandmarks.ts', 'src/world/roadMarkings.ts'],
+    notes: 'Round 7 added magenta/violet Vice City dusk gradients, dual cumulus/cirrus clouds, Overseas Keys SR-1A bridges & Key Lento lighthouse, Little Cuba/Bayside/Stockyard/Leaf Links infill, curved Art Deco lifeguard fin, and road grime patches.',
   },
   {
     id: 'vehicles_physics',
@@ -58,10 +58,10 @@ export const FEATURE_REGISTRY: FeatureAuditEntry[] = [
   {
     id: 'water_aviation',
     section: '7-8. Water, Diving, Boats & Aircraft',
-    name: 'Gerstner Waves, Shoreline Foam, Boat Wake VFX, Sculpted Jetski/Yacht/Freighter & Heli/Airliner',
+    name: 'Gerstner Waves, Underwater Caustics, Sculpted Salvage Wrecks, Boats & Aircraft',
     status: 'IMPLEMENTED_UNVERIFIED',
     owners: ['src/world/waterDiving.ts', 'src/gameplay/aviationMarine.ts', 'src/gameplay/marineSculptor.ts', 'src/gameplay/transportSystems.ts', 'src/rendering/vfxParticles.ts'],
-    notes: '84-subdivision ocean + animated shoreline surf, marine wake foam VFX, sculpted cylindrical airliner w/ retractable gear, rotor-spinning helicopter, sculpted boats & playable Metro/Bus boarding.',
+    notes: 'Round 7 replaced boxy salvage crates with sculpted sunken hull/plane fuselage wrecks & added animated water caustics.',
   },
   {
     id: 'characters_anim',
@@ -98,10 +98,10 @@ export const FEATURE_REGISTRY: FeatureAuditEntry[] = [
   {
     id: 'missions_economy_phone',
     section: '12-14. Missions, Economy, Gear Wheel & Phone',
-    name: 'Multi-Stage Missions + Fail/Retry, Utility Gear Wheel, Economy, Properties, Phone & Photo Studio',
+    name: '6 Regional Multi-Stage Missions, Dynamic World Events, Sculpted Police/SWAT/Heli Pursuit & Phone',
     status: 'IMPLEMENTED_UNVERIFIED',
-    owners: ['src/gameplay/activitiesMissions.ts', 'src/ui/WeaponWheelOverlay.tsx', 'src/ai/economyEncounters.ts', 'src/ui/PhoneApps.tsx', 'src/ui/PhotoModeOverlay.tsx'],
-    notes: 'Round 4 added 2-stage Vice Welcome & Banco Heist missions with fail/retry + Utility Gear Wheel quick tools.',
+    owners: ['src/gameplay/activitiesMissions.ts', 'src/gameplay/missionContent.ts', 'src/ai/policeForensics.ts', 'src/ui/WeaponWheelOverlay.tsx', 'src/ai/economyEncounters.ts'],
+    notes: 'Round 7 added Greater Leonida regional missions (Allied Convoy, Keys Intercept, Gellhorn Bust), Dynamic World Events, sculpted VCPD cruisers/SWAT Enforcers, and helicopter SpotLight searchlight.',
   },
   {
     id: 'save_localization',

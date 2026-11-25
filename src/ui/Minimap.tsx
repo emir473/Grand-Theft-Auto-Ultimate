@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Maximize2 } from 'lucide-react';
 import type { GameRuntime, HudSnapshot } from '../core/gameRuntime';
 import {
@@ -36,6 +36,8 @@ export const Minimap: React.FC<MinimapProps> = ({
   onOpenWorldMap,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // IMG_8170 light-toned street map style vs full-color satellite poster mode
+  const [mapStyle, setMapStyle] = useState<'street' | 'sat'>('street');
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,14 +47,15 @@ export const Minimap: React.FC<MinimapProps> = ({
 
     const w = canvas.width;
     const h = canvas.height;
-    const scale = 0.28; // meters -> px
+    const scale = 0.28;
     const px = hud.playerPos.x;
     const pz = hud.playerPos.z;
+    const isStreet = mapStyle === 'street';
 
     ctx.clearRect(0, 0, w, h);
 
-    // Atlantic & Gulf Ocean gradient backdrop matching IMG_8682
-    ctx.fillStyle = '#0782a6';
+    // Water backdrop: pale aqua (IMG_8170 street mode) vs deep Leonida ocean (IMG_8682 sat)
+    ctx.fillStyle = isStreet ? '#a4d4e6' : '#0782a6';
     ctx.fillRect(0, 0, w, h);
 
     ctx.save();
@@ -84,42 +87,64 @@ export const Minimap: React.FC<MinimapProps> = ({
       }
     };
 
-    // Mainland with shallow coastal sand halo
-    fillPoly(MAINLAND_XZ, '#5d8c52', '#e5cf9b', 4.5);
+    // Mainland fill & coastal shoreline
+    fillPoly(MAINLAND_XZ, isStreet ? '#e6e3dc' : '#5d8c52', isStreet ? '#d5d0c5' : '#e5cf9b', 4.5);
 
-    // Inland lakes, rivers, swamps
+    // Inland lakes, rivers, swamps & parks
     for (const wb of WATER_XZ) {
-      fillPoly(wb.xz, wb.colorHex, '#59b5c9', 1.2);
+      const fillCol = isStreet
+        ? wb.kind === 'swamp'
+          ? '#cbe0c4'
+          : '#a4d4e6'
+        : wb.colorHex;
+      fillPoly(wb.xz, fillCol, isStreet ? '#8ac2d8' : '#59b5c9', 1.2);
     }
 
-    // Islands (Starfish, Waxman, Rialto, Vice Beach, Keys, etc.)
+    // Islands (Starfish, Waxman, Rialto, Vice Beach, Keys, Leaf Links)
     for (const isl of ISLANDS_XZ) {
-      fillPoly(isl.xz, isl.colorHex, '#e5cf9b', 1.8);
+      const fillCol = isStreet
+        ? isl.id === 'isl_leaf_links'
+          ? '#c7e2be'
+          : '#ebe8e1'
+        : isl.colorHex;
+      fillPoly(isl.xz, fillCol, isStreet ? '#d5d0c5' : '#e5cf9b', 1.8);
     }
 
-    // Road Network Edges (Starter + Official State Highways)
+    // Road Network Edges (Double-pass crisp outlined white streets in STREET mode matching IMG_8170)
     const net = runtime.world.roadNetwork;
-    for (const edge of net.edges) {
-      if (edge.id.endsWith('_rev')) continue;
-      const a = net.nodes.get(edge.from);
-      const b = net.nodes.get(edge.to);
-      if (!a || !b) continue;
-      const [ax, ay] = toMap(a.x, a.z);
-      const [bx, by] = toMap(b.x, b.z);
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.strokeStyle =
-        edge.roadType === 'rail'
-          ? '#06b6d4'
-          : edge.closed
-          ? '#ef4444'
-          : edge.roadType === 'highway'
-          ? '#cbd5e1'
-          : '#94a3b8';
-      ctx.lineWidth = edge.roadType === 'highway' ? 3.2 : 2.0;
-      ctx.stroke();
-    }
+    const drawRoadsPass = (casing: boolean) => {
+      for (const edge of net.edges) {
+        if (edge.id.endsWith('_rev')) continue;
+        const a = net.nodes.get(edge.from);
+        const b = net.nodes.get(edge.to);
+        if (!a || !b) continue;
+        const [ax, ay] = toMap(a.x, a.z);
+        const [bx, by] = toMap(b.x, b.z);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        if (casing) {
+          ctx.strokeStyle = isStreet ? '#b8b4aa' : '#334155';
+          ctx.lineWidth = (edge.roadType === 'highway' ? 4.8 : 3.2);
+        } else {
+          ctx.strokeStyle =
+            edge.roadType === 'rail'
+              ? '#06b6d4'
+              : edge.closed
+              ? '#ef4444'
+              : isStreet
+              ? '#ffffff'
+              : edge.roadType === 'highway'
+              ? '#cbd5e1'
+              : '#94a3b8';
+          ctx.lineWidth = edge.roadType === 'highway' ? 3.2 : 2.0;
+        }
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+    };
+    drawRoadsPass(true);
+    drawRoadsPass(false);
 
     // GPS Route
     const dest = runtime.registry.state.gpsDestination;
@@ -132,8 +157,8 @@ export const Minimap: React.FC<MinimapProps> = ({
           if (idx === 0) ctx.moveTo(rx, ry);
           else ctx.lineTo(rx, ry);
         });
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2.6;
+        ctx.strokeStyle = '#d946ef';
+        ctx.lineWidth = 2.8;
         ctx.stroke();
       }
       const [dx, dy] = toMap(dest.x, dest.z);
@@ -147,7 +172,7 @@ export const Minimap: React.FC<MinimapProps> = ({
     const taxi = runtime.crowd.taxiRide;
     if (taxi) {
       const [tx, ty] = toMap(taxi.position.x, taxi.position.z);
-      ctx.fillStyle = '#facc15';
+      ctx.fillStyle = '#eab308';
       ctx.fillRect(tx - 3.5, ty - 3.5, 7, 7);
     }
 
@@ -155,9 +180,9 @@ export const Minimap: React.FC<MinimapProps> = ({
     if (hud.wantedStars > 0) {
       for (const u of runtime.police.units) {
         const [ux, uy] = toMap(u.position.x, u.position.z);
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = u.kind === 'helicopter' ? '#ef4444' : '#2563eb';
         ctx.beginPath();
-        ctx.arc(ux, uy, 3.5, 0, Math.PI * 2);
+        ctx.arc(ux, uy, u.kind === 'helicopter' ? 4.5 : 3.5, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -168,9 +193,9 @@ export const Minimap: React.FC<MinimapProps> = ({
     ctx.save();
     ctx.translate(w / 2, h / 2);
     if (!rotate) ctx.rotate(hud.playerYaw);
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1.4;
+    ctx.fillStyle = isStreet ? '#111827' : '#ffffff';
+    ctx.strokeStyle = isStreet ? '#ffffff' : '#0f172a';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(0, -7);
     ctx.lineTo(5, 5);
@@ -180,9 +205,8 @@ export const Minimap: React.FC<MinimapProps> = ({
     ctx.fill();
     ctx.stroke();
     ctx.restore();
-  }, [runtime, hud, rotate]);
+  }, [runtime, hud, rotate, mapStyle]);
 
-  // Determine nearest verified place label
   let nearestName = 'Leonida';
   let nearestDist = Infinity;
   for (const p of VERIFIED_PLACES) {
@@ -195,7 +219,7 @@ export const Minimap: React.FC<MinimapProps> = ({
   }
 
   return (
-    <div className="relative w-52 sm:w-60 bg-neutral-950/90 border border-white/20 rounded-lg overflow-hidden shadow-lg pointer-events-auto">
+    <div className="relative w-52 sm:w-60 bg-neutral-950/90 border border-white/25 rounded-lg overflow-hidden shadow-lg pointer-events-auto">
       <canvas
         ref={canvasRef}
         width={240}
@@ -204,9 +228,17 @@ export const Minimap: React.FC<MinimapProps> = ({
         title="Click to open Full Leonida Map"
         className="w-full h-32 block cursor-pointer"
       />
-      <div className="flex items-center justify-between gap-2 px-2.5 py-1 bg-neutral-900/95 border-t border-white/10 text-[11px] text-neutral-200">
+      <div className="flex items-center justify-between gap-1.5 px-2.5 py-1 bg-neutral-900/95 border-t border-white/10 text-[11px] text-neutral-200">
         <span className="truncate font-medium">{nearestName}</span>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMapStyle((s) => (s === 'street' ? 'sat' : 'street'))}
+            className="text-sky-300 hover:text-sky-200 font-medium cursor-pointer"
+            title="Toggle Street / Satellite Minimap"
+          >
+            {mapStyle === 'street' ? 'STR' : 'SAT'}
+          </button>
           <button
             type="button"
             onClick={onToggleRotate}

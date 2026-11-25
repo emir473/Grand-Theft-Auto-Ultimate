@@ -86,4 +86,43 @@ export function buildRoadSignageAndCrosswalks(scene: Scene, parent: TransformNod
       strip.parent = root;
     }
   });
+
+  // Asphalt wear patches, subtle intersection tire skid marks & curb storm grates (IMG_8170/IMG_8171)
+  const patchMat = new PBRMaterial('asphaltPatchMat', scene);
+  patchMat.albedoColor = new Color3(0.11, 0.12, 0.13);
+  patchMat.roughness = 0.85;
+
+  const grateMat = new PBRMaterial('stormGrateMat', scene);
+  grateMat.albedoColor = new Color3(0.22, 0.24, 0.26);
+  grateMat.metallic = 0.82;
+  grateMat.roughness = 0.42;
+
+  const wearSpots = [
+    { x: -158, z: -22 },
+    { x: -195, z: 32 },
+    { x: 162, z: -28 },
+    { x: 170, z: 45 },
+    { x: -8, z: -28 },
+  ];
+  wearSpots.forEach((ws, idx) => {
+    const wy = Math.max(0.45, sampleLeonidaHeight(ws.x, ws.z));
+    const patch = MeshBuilder.CreateBox(`roadPatch_${idx}`, { width: 3.4, height: 0.03, depth: 5.2 }, scene);
+    patch.position.set(ws.x + 1.8, wy + 0.3, ws.z + 1.4);
+    patch.rotation.y = idx * 0.22;
+    patch.material = patchMat;
+    patch.parent = root;
+
+    for (const lane of [-1.2, 1.2]) {
+      const skid = MeshBuilder.CreateBox(`skid_${idx}_${lane}`, { width: 0.22, height: 0.025, depth: 6.5 }, scene);
+      skid.position.set(ws.x + lane, wy + 0.305, ws.z - 2.0);
+      skid.rotation.y = 0.14;
+      skid.material = patchMat;
+      skid.parent = root;
+    }
+
+    const grate = MeshBuilder.CreateBox(`stormGrate_${idx}`, { width: 0.9, height: 0.05, depth: 1.4 }, scene);
+    grate.position.set(ws.x + 4.4, wy + 0.29, ws.z);
+    grate.material = grateMat;
+    grate.parent = root;
+  });
 }
