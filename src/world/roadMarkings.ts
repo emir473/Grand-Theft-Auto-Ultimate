@@ -66,4 +66,24 @@ export function buildRoadSignageAndCrosswalks(scene: Scene, parent: TransformNod
       bar.parent = root;
     }
   }
+
+  // Yellow double center lines & diagonal gore markings (IMG_8170)
+  const yellowMat = new PBRMaterial('yellowGorePaintMat', scene);
+  yellowMat.albedoColor = new Color3(0.95, 0.74, 0.14);
+  yellowMat.roughness = 0.6;
+  const goreZones = [
+    { x: -162, z: -28 },
+    { x: 164, z: -24 },
+    { x: 0, z: -28 },
+  ];
+  goreZones.forEach((gz, gi) => {
+    const gy = Math.max(0.45, sampleLeonidaHeight(gz.x, gz.z));
+    for (let s = -3; s <= 3; s++) {
+      const strip = MeshBuilder.CreateBox(`gore_${gi}_${s}`, { width: 0.24, height: 0.04, depth: 3.1 }, scene);
+      strip.position.set(gz.x + s * 2.2, gy + 0.31, gz.z);
+      strip.rotation.y = 0.45;
+      strip.material = yellowMat;
+      strip.parent = root;
+    }
+  });
 }

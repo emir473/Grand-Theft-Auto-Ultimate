@@ -6,12 +6,7 @@
  */
 
 import {
-  Color3,
-  Mesh,
-  MeshBuilder,
-  PBRMaterial,
   Scene,
-  TransformNode,
   Vector3,
 } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
@@ -38,6 +33,7 @@ import {
   type DetachedDebrisPart,
   type VehicleRuntime,
 } from './vehicleDamage';
+import { restoreOutsideVehicleView, syncVehicleCockpitCameraAndHands } from './vehicleCockpit';
 
 export type { VehicleHandlingProfile, VehicleRuntime };
 
@@ -168,6 +164,7 @@ export class VehiclePhysicsSystem implements GameModule {
       lateralSlipMps: 0,
     };
     applyVehicleTuningVisuals(runtime);
+    this.world.wetReflections.registerReflector(rig.root);
     this.runtimes.set(opts.id, runtime);
     return runtime;
   }
@@ -238,6 +235,7 @@ export class VehiclePhysicsSystem implements GameModule {
     }
     char.inVehicleId = null;
     char.locomotion = 'idle';
+    restoreOutsideVehicleView(char, this.player);
     this.player.syncRigFromState(char.id);
     this.registry.events.emit('vehicle:exited', { vehicleId: prevId, characterId: char.id });
     return true;
@@ -247,7 +245,10 @@ export class VehiclePhysicsSystem implements GameModule {
     const char = this.registry.getActiveCharacter();
     if (!char.inVehicleId) return;
     const rt = this.runtimes.get(char.inVehicleId);
-    if (rt) rt.cockpitView = !rt.cockpitView;
+    if (rt) {
+      rt.cockpitView = !rt.cockpitView;
+      if (!rt.cockpitView) restoreOutsideVehicleView(char, this.player);
+    }
   }
 
   applyImpactDamage(rt: VehicleRuntime, impactEnergy: number, zone: 'front' | 'rear' | 'left' | 'right'): void {
@@ -402,10 +403,16 @@ export class VehiclePhysicsSystem implements GameModule {
     if (!rt) return;
 
     if (rt.cockpitView) {
-      const fwd = new Vector3(Math.sin(rt.data.yaw), 0, Math.cos(rt.data.yaw));
-      this.player.camera.position.set(rt.data.position.x, rt.data.position.y + 1.38, rt.data.position.z);
-      this.player.camera.setTarget(this.player.camera.position.add(fwd.scale(15)));
+      syncVehicleCockpitCameraAndHands(
+        rt,
+        char,
+        this.player,
+        this.registry.clock.animationTime,
+        this.registry.state.phoneOpen,
+        renderDt
+      );
     } else {
+      restoreOutsideVehicleView(char, this.player);
       const speed = rt.velocity.length();
       this.player.camera.fov = clamp(0.92 + speed * 0.005, 0.92, 1.15);
       this.player.updateCameraFollow(rt.data.position, false, renderDt, 7.2);

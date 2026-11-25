@@ -1,24 +1,26 @@
 /**
  * Character Rig Mesh Builder for Lucia & Jason
- * Assembles high-tessellation anatomical body parts, clothing, accessories, and first-person view arms.
+ * Assembles 48-segment Lathe anatomical body parts, clothing, accessories, and first-person viewmodel rig.
  */
 
 import { Color3, Mesh, MeshBuilder, PBRMaterial, Scene, TransformNode } from '@babylonjs/core';
 import type { CharacterId } from '../core/types';
 import type { GraphicsEngine } from '../rendering/engineGrafik';
 import {
-  buildFirstPersonArms,
   buildSculptedArm,
   buildSculptedHead,
   buildSculptedLeg,
+  buildSculptedTorso,
   createCharacterMaterials,
   type LegRigNodes,
   type LimbRigNodes,
 } from './characterParts';
+import { buildFirstPersonViewmodel, type FirstPersonViewmodel } from './fpViewmodel';
 
 export interface CharacterRig {
   root: TransformNode;
   torso: Mesh;
+  neck: Mesh;
   head: Mesh;
   leftArm: TransformNode;
   rightArm: TransformNode;
@@ -28,6 +30,7 @@ export interface CharacterRig {
   rightArmNodes: LimbRigNodes;
   leftLegNodes: LegRigNodes;
   rightLegNodes: LegRigNodes;
+  fpViewmodel: FirstPersonViewmodel;
   fpArms: TransformNode;
   jacketMat: PBRMaterial;
 }
@@ -40,64 +43,48 @@ export function buildCharacterRig(
   skinColor: Color3
 ): CharacterRig {
   const root = new TransformNode(`charRoot_${id}`, scene);
-  const { skinMat, jacketMat, pantsMat, hairMat, shoeMat, eyeMat, metalMat } = createCharacterMaterials(
-    scene,
-    id,
-    outfitColor,
-    skinColor
-  );
+  const { skinMat, lipMat, jacketMat, pantsMat, hairMat, shoeMat, soleMat, eyeMat, scleraMat, metalMat } =
+    createCharacterMaterials(scene, id, outfitColor, skinColor);
 
-  // Sculpted torso (tapered athletic chest + waist + collar + neck)
-  const torso = MeshBuilder.CreateCylinder(
-    `${id}_torso`,
-    {
-      diameterTop: id === 'lucia' ? 0.39 : 0.44,
-      diameterBottom: id === 'lucia' ? 0.32 : 0.37,
-      height: 0.52,
-      tessellation: 28,
-    },
-    scene
-  );
-  torso.scaling.set(1.08, 1.0, 0.62);
-  torso.position.y = 1.24;
-  torso.material = jacketMat;
-  torso.parent = root;
+  const torso = buildSculptedTorso(scene, id, root, jacketMat);
 
-  const pelvis = MeshBuilder.CreateCapsule(`${id}_pelvis`, { radius: 0.145, height: 0.34, tessellation: 22 }, scene);
+  const pelvis = MeshBuilder.CreateCapsule(`${id}_pelvis`, { radius: 0.142, height: 0.33, tessellation: 28 }, scene);
   pelvis.rotation.z = Math.PI * 0.5;
-  pelvis.scaling.set(1.0, 1.05, 0.72);
+  pelvis.scaling.set(1.0, 1.04, 0.7);
   pelvis.position.y = 0.94;
   pelvis.material = pantsMat;
   pelvis.parent = root;
 
-  const belt = MeshBuilder.CreateCylinder(`${id}_belt`, { diameter: 0.34, height: 0.055, tessellation: 24 }, scene);
-  belt.scaling.set(1.05, 1.0, 0.66);
+  const belt = MeshBuilder.CreateTorus(`${id}_belt`, { diameter: 0.315, thickness: 0.032, tessellation: 32 }, scene);
+  belt.scaling.set(1.06, 1.0, 0.68);
   belt.position.y = 0.99;
   belt.material = shoeMat;
   belt.parent = root;
 
-  const buckle = MeshBuilder.CreateBox(`${id}_buckle`, { width: 0.055, height: 0.042, depth: 0.02 }, scene);
-  buckle.position.set(0, 0.99, 0.115);
+  const buckle = MeshBuilder.CreateCylinder(`${id}_buckle`, { diameter: 0.048, height: 0.022, tessellation: 16 }, scene);
+  buckle.rotation.x = Math.PI / 2;
+  buckle.position.set(0, 0.99, 0.118);
   buckle.material = metalMat;
   buckle.parent = root;
 
-  const neck = MeshBuilder.CreateCylinder(`${id}_neck`, { diameterTop: 0.105, diameterBottom: 0.12, height: 0.12, tessellation: 20 }, scene);
+  const neck = MeshBuilder.CreateCylinder(`${id}_neck`, { diameterTop: 0.102, diameterBottom: 0.118, height: 0.125, tessellation: 24 }, scene);
   neck.position.y = 1.52;
   neck.material = skinMat;
   neck.parent = root;
 
-  const head = buildSculptedHead(scene, id, root, skinMat, hairMat, eyeMat);
+  const head = buildSculptedHead(scene, id, root, skinMat, lipMat, hairMat, eyeMat, scleraMat);
   const leftArmNodes = buildSculptedArm(scene, id, 'left', root, jacketMat, skinMat);
   const rightArmNodes = buildSculptedArm(scene, id, 'right', root, jacketMat, skinMat);
-  const leftLegNodes = buildSculptedLeg(scene, id, 'left', root, pantsMat, shoeMat);
-  const rightLegNodes = buildSculptedLeg(scene, id, 'right', root, pantsMat, shoeMat);
-  const fpArms = buildFirstPersonArms(scene, id, skinMat, jacketMat);
+  const leftLegNodes = buildSculptedLeg(scene, id, 'left', root, pantsMat, shoeMat, soleMat);
+  const rightLegNodes = buildSculptedLeg(scene, id, 'right', root, pantsMat, shoeMat, soleMat);
+  const fpViewmodel = buildFirstPersonViewmodel(scene, id, skinMat, jacketMat);
 
   gfx.registerShadowCaster(root, true);
 
   return {
     root,
     torso,
+    neck,
     head,
     leftArm: leftArmNodes.shoulderPivot,
     rightArm: rightArmNodes.shoulderPivot,
@@ -107,7 +94,8 @@ export function buildCharacterRig(
     rightArmNodes,
     leftLegNodes,
     rightLegNodes,
-    fpArms,
+    fpViewmodel,
+    fpArms: fpViewmodel.root,
     jacketMat,
   };
 }

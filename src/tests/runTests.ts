@@ -12,6 +12,11 @@ import { SpatialAudioEngine } from '../audio/spatialAudio';
 import { SynthwaveRadioEngine } from '../audio/synthwaveRadio';
 import { GamepadManager } from '../core/gamepadManager';
 import { mpsToKmh, mpsToMph, formatMoney } from '../core/types';
+import { FEATURE_REGISTRY } from '../core/featureRegistry';
+import { ENTERABLE_INTERIORS } from '../world/interiors';
+import { sampleLeonidaHeight, sampleLeonidaSurface } from '../world/terrainHeightfield';
+import { getVerifiedPlacesWithWorldCoords } from '../world/leonidaPlaces';
+import { posterUVToWorld } from '../world/leonidaGeoData';
 
 let passed = 0;
 let failed = 0;
@@ -111,6 +116,30 @@ test('SynthwaveRadio cycles stations & GamepadManager degrades safely headless',
   const sample = gp.poll();
   assert(!sample.connected && !sample.hapticsSupported, 'Headless environment must report unconnected gamepad safely');
   gp.triggerHaptics(1, 1, 100, true, 1); // Must not throw without navigator
+});
+
+test('FeatureRegistry & Enterable Interiors metadata integrity', () => {
+  assert(FEATURE_REGISTRY.length >= 12, 'Feature registry must cover all major subsystems');
+  assert(ENTERABLE_INTERIORS.length >= 6, 'At least 6 enterable furnished interiors expected');
+  assert(
+    FEATURE_REGISTRY.every((f) => f.owners.length > 0 && f.notes.length > 10),
+    'Every feature audit entry must specify owner files and status notes'
+  );
+});
+
+test('Leonida Heightfield & Surface queries cover regional biomes consistently', () => {
+  const starY = sampleLeonidaHeight(0, 0);
+  const kalagaXZ = posterUVToWorld(0.505, 0.215);
+  const kalagaY = sampleLeonidaHeight(kalagaXZ.x, kalagaXZ.z);
+  const grassriversXZ = posterUVToWorld(0.450, 0.660);
+  const swampSurf = sampleLeonidaSurface(grassriversXZ.x, grassriversXZ.z, 0.1);
+  const wetBridgeSurf = sampleLeonidaSurface(0, -28, 0.8);
+  const places = getVerifiedPlacesWithWorldCoords();
+  assert(Math.abs(starY - 0.9) < 0.01, 'Starfish Island plateau height must remain 0.9m');
+  assert(kalagaY > 15, 'Mount Kalaga northern highlands must rise well above sea level');
+  assert(swampSurf === 'mud' || swampSurf === 'water', 'Grassrivers wetland must report mud or water');
+  assert(wetBridgeSurf === 'wet_asphalt', 'Rainy causeway surface must report wet_asphalt');
+  assert(places.length >= 25, 'Verified Leonida place catalog must stay intact');
 });
 
 console.log(`\nTest Summary: ${passed} passed, ${failed} failed.`);

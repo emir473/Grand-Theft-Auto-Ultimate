@@ -129,7 +129,7 @@ export function sampleLeonidaHeight(x: number, z: number): number {
 }
 
 export function sampleLeonidaSurface(x: number, z: number, wetness: number): SurfaceMaterial {
-  if (Math.abs(x) <= 28 && z >= -28 && z <= 20) return 'marble';
+  if (Math.abs(x) <= 26 && z >= -22 && z <= 20) return 'marble';
   if (Math.abs(z + 28) <= 8.5 && x >= -145 && x <= 170) return wetness > 0.35 ? 'wet_asphalt' : 'asphalt';
   if (x >= 188 && x <= 255 && z >= -230 && z <= 265) return 'sand';
   if (x >= 156 && x <= 174 && z >= -230 && z <= 265) return wetness > 0.35 ? 'wet_asphalt' : 'asphalt';
@@ -137,7 +137,7 @@ export function sampleLeonidaSurface(x: number, z: number, wetness: number): Sur
 
   const h = sampleLeonidaHeight(x, z);
   if (h < -0.05) return 'water';
-  if (h < 0.42 && z < -320) return 'mud';
+  if (h < 0.72 && z < -320 && x < -320) return 'mud';
   if (h < 1.35) return 'sand';
   return 'gravel';
 }

@@ -121,7 +121,8 @@ export class PlayerController implements GameModule {
     rig.root.setEnabled(enabled);
     const isActive = id === this.registry.state.activeCharacterId;
     const isActiveFirst = c.inVehicleId === null && isActive && this.registry.state.cameraMode === 'first';
-    rig.head.isVisible = !isActiveFirst;
+    rig.head.setEnabled(!isActiveFirst);
+    rig.neck.setEnabled(!isActiveFirst);
     rig.fpArms.setEnabled(isActiveFirst);
   }
 
@@ -327,11 +328,17 @@ export class PlayerController implements GameModule {
     if (this.registry.state.directorModeActive || this.registry.state.photoModeActive) return;
 
     if (vehicleOffset === 0 && this.registry.state.cameraMode === 'first') {
+      this.camera.minZ = 0.06;
       const char = this.registry.getActiveCharacter();
       const eyeHeight = char.locomotion === 'crouch' ? 1.04 : char.locomotion === 'crawl' ? 0.52 : 1.62;
       const moveMag = Math.hypot(this.velocities[char.id].x, this.velocities[char.id].z);
-      const bob = moveMag > 0.6 ? Math.sin(this.registry.clock.animationTime * 9.5) * 0.032 : 0;
-      const eyePos = new Vector3(targetPos.x, targetPos.y + eyeHeight + bob, targetPos.z);
+      const bob = moveMag > 0.6 ? Math.sin(this.registry.clock.animationTime * 9.5) * 0.026 : 0;
+      const fwdOffset = 0.14;
+      const eyePos = new Vector3(
+        targetPos.x + Math.sin(this.camYaw) * fwdOffset,
+        targetPos.y + eyeHeight + bob,
+        targetPos.z + Math.cos(this.camYaw) * fwdOffset
+      );
       const lookDir = new Vector3(
         Math.sin(this.camYaw) * Math.cos(this.camPitch),
         -Math.sin(this.camPitch) * 0.85,
@@ -342,6 +349,7 @@ export class PlayerController implements GameModule {
       char.yaw = this.camYaw;
       return;
     }
+    this.camera.minZ = 0.2;
 
     const dist = vehicleOffset > 0 ? vehicleOffset : aiming ? 2.4 : this.camDistance;
     const height = vehicleOffset > 0 ? 2.2 : aiming ? 1.55 : 1.75;

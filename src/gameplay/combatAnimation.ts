@@ -183,6 +183,7 @@ export class CombatAnimationSystem implements GameModule {
         // Seated convertible / open-cockpit driving posture
         rig.torso.position.y = 1.02;
         rig.torso.rotation.x = 0.08;
+        rig.neck.position.y = 1.3;
         rig.head.position.y = 1.44;
         rig.leftLegNodes.hipPivot.position.y = 0.72;
         rig.rightLegNodes.hipPivot.position.y = 0.72;
@@ -213,6 +214,7 @@ export class CombatAnimationSystem implements GameModule {
       if (loco === 'crouch' || (cid === char.id && this.inCover)) {
         rig.torso.position.y = 0.94;
         rig.torso.rotation.x = 0.16;
+        rig.neck.position.y = 1.22;
         rig.head.position.y = 1.36;
         rig.leftLegNodes.hipPivot.rotation.x = -0.68 + swing * 0.45;
         rig.rightLegNodes.hipPivot.rotation.x = -0.68 - swing * 0.45;
@@ -221,6 +223,7 @@ export class CombatAnimationSystem implements GameModule {
       } else if (loco === 'crawl') {
         rig.torso.position.y = 0.44;
         rig.torso.rotation.x = Math.PI * 0.42;
+        rig.neck.position.y = 0.5;
         rig.head.position.y = 0.56;
         rig.leftLegNodes.hipPivot.rotation.x = 1.2 + swing * 0.3;
         rig.rightLegNodes.hipPivot.rotation.x = 1.2 - swing * 0.3;
@@ -229,6 +232,7 @@ export class CombatAnimationSystem implements GameModule {
       } else if (loco === 'swim' || loco === 'dive') {
         rig.torso.position.y = 1.1;
         rig.torso.rotation.x = Math.PI * 0.42;
+        rig.neck.position.y = 1.28;
         rig.head.position.y = 1.42;
         rig.leftLegNodes.hipPivot.rotation.x = 1.1 + Math.sin(t * 9) * 0.32;
         rig.rightLegNodes.hipPivot.rotation.x = 1.1 - Math.sin(t * 9) * 0.32;
@@ -237,6 +241,7 @@ export class CombatAnimationSystem implements GameModule {
       } else {
         rig.torso.position.y = 1.24 + (isMoving ? Math.abs(Math.sin(t * freq)) * 0.03 : 0);
         rig.torso.rotation.x = loco === 'sprint' ? 0.14 : 0.03;
+        rig.neck.position.y = 1.52;
         rig.head.position.y = 1.66;
         rig.leftLegNodes.hipPivot.rotation.x = swing;
         rig.rightLegNodes.hipPivot.rotation.x = -swing;

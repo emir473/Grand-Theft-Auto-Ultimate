@@ -5,14 +5,15 @@
  * and Abstract Fictional Ballistic/Projectile Hit Simulation.
  */
 
-import { Color3, Mesh, MeshBuilder, PBRMaterial, Scene, Vector3 } from '@babylonjs/core';
+import { Color3, Mesh, MeshBuilder, PBRMaterial, Scene, TransformNode, Vector3 } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
-import type { CharacterId, InventoryItem, Vec3, WeaponDefinition } from '../core/types';
+import type { CharacterId, InventoryItem, Vec3 } from '../core/types';
 import { CENTRAL_LIMITS, clamp } from '../core/types';
 import type { GraphicsEngine } from '../rendering/engineGrafik';
 import type { PlayerController } from './playerController';
 import type { CombatAnimationSystem } from './combatAnimation';
 import { WEAPON_CATALOG } from './weaponCatalog';
+import { updateFirstPersonViewmodel } from './fpViewmodel';
 
 export { WEAPON_CATALOG };
 
@@ -48,8 +49,11 @@ export class WeaponsInventorySystem implements GameModule {
   private projectiles: ActiveProjectile[] = [];
   private targets = new Map<string, HitTargetCallback>();
   private fireCooldownSec = 0;
+  private recoilKick = 0;
+  private reloadTimerSec = 0;
   private projMat!: PBRMaterial;
-  private heldMeshes: Partial<Record<CharacterId, Mesh>> = {};
+  private gunMat!: PBRMaterial;
+  private heldMeshes: Partial<Record<CharacterId, TransformNode>> = {};
 
   validateDependencies(registry: GameRegistry): void {
     this.registry = registry;
@@ -66,12 +70,29 @@ export class WeaponsInventorySystem implements GameModule {
     this.projMat.albedoColor = new Color3(1, 0.85, 0.3);
     this.projMat.emissiveColor = new Color3(1, 0.72, 0.15);
 
+    this.gunMat = new PBRMaterial('heldGunMat', this.scene);
+    this.gunMat.albedoColor = new Color3(0.14, 0.15, 0.18);
+    this.gunMat.metallic = 0.85;
+    this.gunMat.roughness = 0.28;
+
     for (const cid of ['lucia', 'jason'] as CharacterId[]) {
       const rig = this.player.rigs[cid];
-      const gun = MeshBuilder.CreateBox(`${cid}_heldWeapon`, { width: 0.08, height: 0.12, depth: 0.36 }, this.scene);
-      gun.parent = rig.rightArm;
-      gun.position.set(0, -0.24, 0.18);
-      gun.isVisible = false;
+      const gun = new TransformNode(`${cid}_heldWeapon`, this.scene);
+      gun.parent = rig.rightArmNodes.handMesh;
+      gun.position.set(0, -0.02, 0.04);
+
+      const slide = MeshBuilder.CreateCapsule(`${cid}_wSlide`, { radius: 0.024, height: 0.28, tessellation: 14 }, this.scene);
+      slide.rotation.x = Math.PI / 2;
+      slide.position.set(0, 0.04, 0.1);
+      slide.material = this.gunMat;
+      slide.parent = gun;
+
+      const grip = MeshBuilder.CreateCapsule(`${cid}_wGrip`, { radius: 0.018, height: 0.11, tessellation: 12 }, this.scene);
+      grip.rotation.x = 0.22;
+      grip.material = this.gunMat;
+      grip.parent = gun;
+
+      gun.setEnabled(false);
       this.heldMeshes[cid] = gun;
     }
 
@@ -100,7 +121,7 @@ export class WeaponsInventorySystem implements GameModule {
     this.registry.state.activeWeapons[char.id] = weaponId;
     const gunMesh = this.heldMeshes[char.id];
     if (gunMesh) {
-      gunMesh.isVisible = weaponId !== 'unarmed';
+      gunMesh.setEnabled(weaponId !== 'unarmed' && this.registry.state.cameraMode !== 'first');
     }
     this.registry.events.emit('inventory:changed', {
       characterId: char.id,
@@ -213,12 +234,14 @@ export class WeaponsInventorySystem implements GameModule {
         item.loadedAmmo += reloadAmt;
         item.reserveAmmo -= reloadAmt;
         this.fireCooldownSec = 0.85;
+        this.reloadTimerSec = 0.85;
       }
       return false;
     }
 
     item.loadedAmmo -= 1;
     this.fireCooldownSec = 1 / def.fireRatePerSec;
+    this.recoilKick = clamp(this.recoilKick + (def.id === 'rpg_launcher' ? 1.0 : 0.65), 0, 1.15);
     char.locomotion = 'shoot';
 
     const yaw = this.player.getCameraYaw();
@@ -298,6 +321,32 @@ export class WeaponsInventorySystem implements GameModule {
 
   update(simDt: number): void {
     if (this.fireCooldownSec > 0) this.fireCooldownSec = Math.max(0, this.fireCooldownSec - simDt);
+    if (this.recoilKick > 0) this.recoilKick = Math.max(0, this.recoilKick - simDt * 5.8);
+    if (this.reloadTimerSec > 0) this.reloadTimerSec = Math.max(0, this.reloadTimerSec - simDt);
+
+    const char = this.registry.getActiveCharacter();
+    const activeWepId = this.registry.state.activeWeapons[char.id] ?? 'unarmed';
+    const gun3p = this.heldMeshes[char.id];
+    if (gun3p) {
+      gun3p.setEnabled(activeWepId !== 'unarmed' && this.registry.state.cameraMode !== 'first' && char.inVehicleId === null);
+    }
+    const rig = this.player.rigs[char.id];
+    if (rig && this.registry.state.cameraMode === 'first' && char.inVehicleId === null) {
+      const vel = this.player.velocities[char.id];
+      const veh = char.inVehicleId ? this.registry.state.vehicles.get(char.inVehicleId) : null;
+      updateFirstPersonViewmodel(rig.fpViewmodel, {
+        animTime: this.registry.clock.animationTime,
+        speedMps: Math.hypot(vel.x, vel.z),
+        sprinting: char.locomotion === 'sprint',
+        aiming: char.locomotion === 'aim' || char.locomotion === 'shoot',
+        phoneOpen: this.registry.state.phoneOpen,
+        inVehicle: Boolean(veh),
+        steerAngle: 0,
+        weaponId: activeWepId,
+        recoilKick: this.recoilKick,
+        reloadAlpha: this.reloadTimerSec > 0 ? 1 - this.reloadTimerSec / 0.85 : 0,
+      });
+    }
 
     const wind = this.registry.state.windVector;
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
@@ -348,6 +397,7 @@ export class WeaponsInventorySystem implements GameModule {
     this.projectiles = [];
     for (const m of Object.values(this.heldMeshes)) m?.dispose();
     this.projMat?.dispose();
+    this.gunMat?.dispose();
     this.targets.clear();
     this.readiness = 'disposed';
   }

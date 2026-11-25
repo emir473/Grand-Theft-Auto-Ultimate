@@ -17,6 +17,9 @@ import {
   buildWeatheredStiltHouseDetails,
   buildZigzagMarinaPavilion,
 } from './landmarkDetails';
+import { buildDowntownMonorailAndOverpass } from './downtownInfra';
+import { buildCausewayBridgesAndBoardwalk, buildDowntownSignageAndArena } from './signageAndLandmarks';
+import { buildGreaterLeonidaBiomeProps, buildVCPortAndVCIADetails } from './regionalLandmarks';
 
 export type DistrictMatMap = Record<string, PBRMaterial>;
 
@@ -124,6 +127,7 @@ export function buildViceBeachChunk(
   for (const interior of ENTERABLE_INTERIORS.filter((x) => x.kind === 'nightclub' || x.kind === 'clothing')) {
     makeBox(scene, gfx, `shell_${interior.id}`, interior.size.w, interior.size.h, interior.size.d, interior.interiorCenter.x, interior.size.h / 2 + 0.5, interior.interiorCenter.z, mats.stucco, root);
   }
+  buildCausewayBridgesAndBoardwalk(scene, gfx, mats.concrete, mats.travertine, mats.neon_cyan, root);
   return root;
 }
 
@@ -174,6 +178,8 @@ export function buildDowntownAndPortChunk(
   for (const int of ENTERABLE_INTERIORS.filter((x) => x.kind !== 'villa' && x.kind !== 'nightclub' && x.kind !== 'clothing')) {
     makeBox(scene, gfx, `shell_${int.id}`, int.size.w, int.size.h, int.size.d, int.interiorCenter.x, int.size.h / 2 + 0.4, int.interiorCenter.z, mats.concrete, root);
   }
+  buildDowntownMonorailAndOverpass(scene, gfx, mats.concrete, mats.asphalt, mats.neon_cyan, root);
+  buildDowntownSignageAndArena(scene, gfx, mats.concrete, mats.stucco, mats.neon_coral, mats.neon_cyan, root);
   return root;
 }
 
@@ -223,6 +229,9 @@ export function buildStateRegionsChunks(
   // Port Gellhorn docks (IMG_8682)
   const pgXZ = posterUVToWorld(0.305, 0.355);
   makeBox(scene, gfx, 'port_gellhorn_pier', 75, 1.5, 48, pgXZ.x, 1.2, pgXZ.z, mats.concrete, stateRoot, false);
+
+  buildVCPortAndVCIADetails(scene, gfx, mats.concrete, mats.stucco, mats.neon_cyan, vciaRoot);
+  buildGreaterLeonidaBiomeProps(scene, gfx, mats.concrete, stateRoot);
 
   return [vciaRoot, stateRoot];
 }

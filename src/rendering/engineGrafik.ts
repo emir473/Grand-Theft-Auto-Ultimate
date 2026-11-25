@@ -21,11 +21,11 @@ import {
   ShadowGenerator,
   TransformNode,
   Vector3,
-  WebGPUEngine,
 } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { QualityProfile } from '../core/types';
 import { clamp } from '../core/types';
+import { createSafeBabylonEngine } from './engineInit';
 
 export interface ShadowConfigDoc {
   activeMethod: 'CascadedShadowGenerator' | 'ShadowGenerator';
@@ -92,35 +92,24 @@ export class GraphicsEngine implements GameModule {
   async init(): Promise<void> {
     if (this.readiness === 'initialized' || this.readiness === 'running') return;
 
-    let createdEngine: Engine | null = null;
-    try {
-      const webgpuSupported = await WebGPUEngine.IsSupportedAsync;
-      if (webgpuSupported) {
-        const wgpu = new WebGPUEngine(this.canvas, {
-          antialias: true,
-          adaptToDeviceRatio: true,
-          powerPreference: 'high-performance',
-        });
-        await wgpu.initAsync();
-        createdEngine = wgpu as unknown as Engine;
-        this.backend = 'WebGPU';
+    const { engine, backend } = await createSafeBabylonEngine(
+      this.canvas,
+      () => this.registry.clock.setPaused(true),
+      () => {
+        this.registry.clock.resetAccumulator();
+        if (!this.registry.state.pauseMenuOpen) {
+          this.registry.clock.setPaused(false);
+        }
       }
-    } catch (err) {
-      console.warn('[engine_grafik] WebGPU unavailable, falling back to WebGL2:', err);
-      createdEngine = null;
+    );
+
+    if (this.readiness === 'disposed') {
+      engine.dispose();
+      return;
     }
 
-    if (!createdEngine) {
-      createdEngine = new Engine(this.canvas, true, {
-        preserveDrawingBuffer: false,
-        stencil: true,
-        antialias: true,
-        powerPreference: 'high-performance',
-      });
-      this.backend = 'WebGL2';
-    }
-
-    this.engine = createdEngine;
+    this.engine = engine;
+    this.backend = backend;
     this.scene = new Scene(this.engine);
     this.scene.useRightHandedSystem = false; // Left-handed: +X East, +Y Up, +Z North
     this.scene.clearColor = new Color4(0.45, 0.72, 0.94, 1.0);
@@ -142,17 +131,6 @@ export class GraphicsEngine implements GameModule {
     this.registry.scene = this.scene;
     this.registry.canvas = this.canvas;
     this.registry.metrics.rendererBackend = this.backend;
-
-    this.canvas.addEventListener('webglcontextlost', (e) => {
-      e.preventDefault();
-      this.registry.clock.setPaused(true);
-    });
-    this.canvas.addEventListener('webglcontextrestored', () => {
-      this.registry.clock.resetAccumulator();
-      if (!this.registry.state.pauseMenuOpen) {
-        this.registry.clock.setPaused(false);
-      }
-    });
 
     window.addEventListener('resize', this.onResizeBound);
     document.addEventListener('visibilitychange', this.onVisibilityBound);
@@ -193,7 +171,7 @@ export class GraphicsEngine implements GameModule {
       low: 1024,
       medium: 2048,
       high: 2048,
-      ultra: 4096,
+      ultra: this.backend === 'WebGPU' ? 2048 : 4096,
     };
     const mapSize = Math.min(desiredSize[profile], this.maxSupportedTexSize);
 
@@ -250,8 +228,8 @@ export class GraphicsEngine implements GameModule {
     if (!cam) return;
 
     const pipe = new DefaultRenderingPipeline('leonidaPipeline', true, this.scene, [cam]);
-    pipe.samples = profile === 'ultra' ? 4 : profile === 'high' ? 2 : 1;
-    pipe.fxaaEnabled = profile !== 'low';
+    pipe.samples = this.backend === 'WebGPU' ? 1 : profile === 'ultra' ? 4 : profile === 'high' ? 2 : 1;
+    pipe.fxaaEnabled = profile !== 'low' || this.backend === 'WebGPU';
 
     pipe.imageProcessingEnabled = true;
     pipe.imageProcessing.toneMappingEnabled = true;
@@ -316,6 +294,7 @@ export class GraphicsEngine implements GameModule {
     this.readiness = 'running';
 
     this.engine.runRenderLoop(() => {
+      if (this.engine.isDisposed || this.scene.isDisposed) return;
       const renderStart = performance.now();
       const rawDt = clamp(this.engine.getDeltaTime() / 1000, 0, 0.1);
 

@@ -26,6 +26,7 @@ import { SpatialAudioEngine } from '../audio/spatialAudio';
 import { SaveManager } from '../persistence/saveManager';
 import { i18n } from '../ui/localization';
 import { mpsToKmh, mpsToMph } from './types';
+import { VfxParticlesSystem } from '../rendering/vfxParticles';
 
 export interface HudSnapshot {
   characterId: 'lucia' | 'jason';
@@ -94,6 +95,7 @@ export class GameRuntime {
   public police!: PoliceSystem;
   public economy!: EconomyEncountersSystem;
   public audio!: SpatialAudioEngine;
+  public vfx!: VfxParticlesSystem;
 
   private loopRegistered = false;
   private disposed = false;
@@ -135,6 +137,7 @@ export class GameRuntime {
     this.police = new PoliceSystem();
     this.economy = new EconomyEncountersSystem();
     this.audio = new SpatialAudioEngine();
+    this.vfx = new VfxParticlesSystem(this.graphics.scene);
 
     const ordered = [
       this.weather,
@@ -219,6 +222,7 @@ export class GameRuntime {
         if (inputState.coverPressed) {
           this.combat.toggleCover(this.registry.getActiveCharacter().position);
         }
+        this.vfx?.update(dt, this.registry, this.vehicles, this.transport, this.world);
       });
     }
 
@@ -318,6 +322,7 @@ export class GameRuntime {
   dispose(): void {
     this.disposed = true;
     this.input.detach();
+    this.vfx?.dispose();
     this.assetLoader?.dispose();
     this.registry.disposeAll();
   }

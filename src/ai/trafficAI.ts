@@ -3,7 +3,7 @@
  * Vehicles cruise road graph lanes, yield at red/yellow signals, and queue behind lead traffic.
  */
 
-import { Scene, TransformNode } from '@babylonjs/core';
+import { Color3, Scene, TransformNode, Vector3, type PBRMaterial } from '@babylonjs/core';
 import type { GameModule, GameRegistry, ModuleReadiness } from '../core/registry';
 import type { VehicleClass } from '../core/types';
 import { clamp } from '../core/types';
@@ -25,17 +25,22 @@ export interface TrafficAgent {
   y: number;
   z: number;
   yaw: number;
+  wheelRoll: number;
   stoppedAtSignal: boolean;
   root: TransformNode;
+  wheels: TransformNode[];
+  brakeLightMat: PBRMaterial;
 }
 
-const TRAFFIC_TEMPLATES: Array<{ vehicleClass: VehicleClass; colorHex: string; speed: number }> = [
-  { vehicleClass: 'sedan', colorHex: '#e2e8f0', speed: 12.5 },
-  { vehicleClass: 'taxi', colorHex: '#facc15', speed: 13.0 },
-  { vehicleClass: 'sports', colorHex: '#3b82f6', speed: 15.5 },
-  { vehicleClass: 'suv', colorHex: '#334155', speed: 12.0 },
-  { vehicleClass: 'muscle', colorHex: '#10b981', speed: 14.2 },
-  { vehicleClass: 'bus', colorHex: '#0284c7', speed: 10.2 },
+const TRAFFIC_TEMPLATES: Array<{ tag: string; vehicleClass: VehicleClass; colorHex: string; speed: number }> = [
+  { tag: 'sedan', vehicleClass: 'sedan', colorHex: '#e2e8f0', speed: 12.5 },
+  { tag: 'convertible', vehicleClass: 'muscle', colorHex: '#f5f0e1', speed: 14.2 },
+  { tag: 'taxi', vehicleClass: 'taxi', colorHex: '#facc15', speed: 13.0 },
+  { tag: 'mixer', vehicleClass: 'truck', colorHex: '#f1f5f9', speed: 10.0 },
+  { tag: 'sports', vehicleClass: 'sports', colorHex: '#3b82f6', speed: 15.5 },
+  { tag: 'mail', vehicleClass: 'truck', colorHex: '#e5e7eb', speed: 11.2 },
+  { tag: 'suv', vehicleClass: 'suv', colorHex: '#334155', speed: 12.0 },
+  { tag: 'bus', vehicleClass: 'bus', colorHex: '#0284c7', speed: 10.2 },
 ];
 
 export class TrafficAISystem implements GameModule {
@@ -64,18 +69,18 @@ export class TrafficAISystem implements GameModule {
     const drivableEdges = this.world.roadNetwork.edges.filter(
       (e) => e.roadType !== 'rail' && e.roadType !== 'waterway' && !e.closed
     );
-    const seedCount = Math.min(14, drivableEdges.length);
+    const seedCount = Math.min(24, drivableEdges.length);
 
     for (let i = 0; i < seedCount; i++) {
-      const edge = drivableEdges[(i * 3) % drivableEdges.length];
+      const edge = drivableEdges[(i * 2) % drivableEdges.length];
       const a = this.world.roadNetwork.nodes.get(edge.from);
       const b = this.world.roadNetwork.nodes.get(edge.to);
       if (!a || !b) continue;
 
       const tpl = TRAFFIC_TEMPLATES[i % TRAFFIC_TEMPLATES.length];
       const profile = HANDLING_PROFILES[tpl.vehicleClass];
-      const id = `traffic_${i}`;
-      const rig = buildSculptedVehicleRig(this.scene, this.gfx, id, tpl.vehicleClass, profile, tpl.colorHex, `AI-${100 + i}`);
+      const id = `traffic_${tpl.tag}_${i}`;
+      const rig = buildSculptedVehicleRig(this.scene, this.gfx, id, tpl.vehicleClass, profile, tpl.colorHex, `LND-${100 + i}`);
       rig.root.parent = this.root;
 
       const yaw = Math.atan2(b.x - a.x, b.z - a.z);
@@ -99,8 +104,11 @@ export class TrafficAISystem implements GameModule {
         y: py,
         z: pz,
         yaw,
+        wheelRoll: 0,
         stoppedAtSignal: false,
         root: rig.root,
+        wheels: rig.wheels,
+        brakeLightMat: rig.brakeLightMat,
       });
     }
 
@@ -202,6 +210,14 @@ export class TrafficAISystem implements GameModule {
       if (visible) {
         ag.root.position.set(ag.x, ag.y, ag.z);
         ag.root.rotation.y = ag.yaw;
+        ag.wheelRoll += (ag.speedMps * simDt) / 0.36;
+        for (const wNode of ag.wheels) {
+          for (const ch of wNode.getChildren()) {
+            if ('rotation' in ch) (ch as { rotation: Vector3 }).rotation.x = ag.wheelRoll;
+          }
+        }
+        const braking = blockedAhead || ag.speedMps < 1.2;
+        ag.brakeLightMat.emissiveColor = braking ? new Color3(1.0, 0.08, 0.08) : new Color3(0.28, 0.02, 0.02);
       }
     }
   }

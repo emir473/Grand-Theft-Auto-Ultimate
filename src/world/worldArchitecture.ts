@@ -33,6 +33,8 @@ import {
 } from './districtBuilders';
 import { FoliageAndTrafficLights } from './foliageAndProps';
 import { buildRoadSignageAndCrosswalks } from './roadMarkings';
+import { buildInteriorFurnishings } from './interiorFurnishings';
+import { WetAsphaltReflections } from '../rendering/wetReflections';
 
 export interface WorldChunk {
   id: string;
@@ -57,6 +59,7 @@ export class WorldArchitecture implements GameModule {
   public readonly spatialGrid = new SpatialGrid(60);
   public readonly chunks = new Map<string, WorldChunk>();
   public readonly foliageAndLights = new FoliageAndTrafficLights();
+  public readonly wetReflections = new WetAsphaltReflections();
 
   private mats: DistrictMatMap = {};
   private worldRoot!: TransformNode;
@@ -93,6 +96,9 @@ export class WorldArchitecture implements GameModule {
     this.registerChunk('greater_leonida', 'Greater Leonida', { x: -650, y: 1, z: 200 }, 1650, stateRoot);
 
     this.foliageAndLights.build(this.scene, this.weather, this.worldRoot);
+    buildInteriorFurnishings(this.scene, this.mats.travertine, this.mats.neon_coral, this.mats.neon_cyan, this.worldRoot);
+    this.wetReflections.build(this.scene, this.worldRoot, this.registry.state.qualityProfile);
+    this.wetReflections.registerReflector(vbRoot);
     this.readiness = 'initialized';
   }
 
@@ -240,6 +246,8 @@ export class WorldArchitecture implements GameModule {
 
   update(simDt: number): void {
     this.foliageAndLights.update(simDt, Math.hypot(this.registry.state.windVector.x, this.registry.state.windVector.z), this.registry.clock.gameTime);
+    this.wetReflections.applyQuality(this.registry.state.qualityProfile);
+    this.wetReflections.update(this.weather.currentWetness);
 
     this.streamTimer += simDt;
     if (this.streamTimer < 0.75) return;
@@ -262,6 +270,7 @@ export class WorldArchitecture implements GameModule {
   dispose(): void {
     for (const m of Object.values(this.mats)) m.dispose();
     this.foliageAndLights.dispose();
+    this.wetReflections.dispose();
     this.worldRoot?.dispose();
     this.spatialGrid.clear();
     this.chunks.clear();
